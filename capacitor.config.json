@@ -1,0 +1,6 @@
+{
+  "appId": "com.mohamed.dailytargets",
+  "appName": "تارجت اليوم",
+  "webDir": "www",
+  "android": { "backgroundColor": "#E9F0EF" }
+}

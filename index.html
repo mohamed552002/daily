@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0F6B63">
+<style>:root{color-scheme:light}html,body{margin:0}</style>
+</head>
+<body>
+<title>تارجت اليوم</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@500;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: عمود واحد ضيق (موبايل أولًا). فوق: اليوم + شريط تقدّم مقسوم بعدد المهام. تحت: كروت المهام، كل كارت فيه عدّاد وزرار زيادة كبير. */
+:root{
+  --bg:#E9F0EF; --surface:#F7FAF9; --ink:#0E2429; --muted:#52686B; --line:#CBD9D7;
+  --track:#D3E0DE; --accent:#0F6B63; --accent-ink:#FFFFFF; --done:#A8690A; --danger:#B3261E;
+  --display:'Reem Kufi','IBM Plex Sans Arabic',system-ui,sans-serif;
+  --body:'IBM Plex Sans Arabic',system-ui,'Segoe UI',Tahoma,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0B191C; --surface:#12262A; --ink:#E3EEEC; --muted:#8FA9AC; --line:#22393D;
+    --track:#1D3639; --accent:#3FB5A8; --accent-ink:#04201D; --done:#E8B04A; --danger:#F2867F;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0B191C; --surface:#12262A; --ink:#E3EEEC; --muted:#8FA9AC; --line:#22393D;
+  --track:#1D3639; --accent:#3FB5A8; --accent-ink:#04201D; --done:#E8B04A; --danger:#F2867F;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{
+  background:var(--bg); color:var(--ink); font-family:var(--body); font-size:16px; line-height:1.55;
+  direction:rtl; text-align:right;
+  padding-block:20px 48px;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));
+  padding-right:max(16px, env(safe-area-inset-right, 0px));
+}
+main{max-width:560px; margin-inline:auto; display:flex; flex-direction:column; gap:20px; min-width:0}
+button,input{font:inherit; color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--accent); outline-offset:2px}
+.num{font-variant-numeric:tabular-nums; direction:ltr; unicode-bidi:isolate; display:inline-block}
+
+/* header */
+.hero{display:flex; flex-direction:column; gap:14px}
+.daybar{display:flex; align-items:center; justify-content:space-between; gap:12px}
+.day{min-width:0}
+.day h1{margin:0; font-family:var(--display); font-weight:700; font-size:2.1rem; line-height:1.15; text-wrap:balance}
+.day p{margin:2px 0 0; color:var(--muted); font-size:.95rem}
+.nav{display:flex; gap:8px; flex-shrink:0}
+.icon-btn{
+  width:44px; height:44px; border-radius:50%; border:1px solid var(--line); background:var(--surface);
+  display:grid; place-items:center; font-size:1.3rem; line-height:1;
+}
+.icon-btn[disabled]{opacity:.35; cursor:default}
+.back{align-self:flex-start; background:none; border:0; padding:4px 0; color:var(--accent); font-weight:600; text-decoration:underline; text-underline-offset:3px}
+.summary{display:flex; flex-direction:column; gap:8px}
+.summary-text{display:flex; justify-content:space-between; align-items:baseline; gap:8px; font-weight:500}
+.summary-text span:last-child{color:var(--muted); font-size:.9rem}
+.segs{display:flex; gap:6px}
+.seg{flex:1; height:10px; border-radius:6px; background:var(--track); overflow:hidden}
+.seg b{display:block; height:100%; width:0; background:var(--accent); border-radius:6px; transition:width .25s}
+.seg.full b{background:var(--done)}
+
+/* cards */
+.list{display:flex; flex-direction:column; gap:14px}
+.card{background:var(--surface); border:1px solid var(--line); border-radius:18px; padding:16px; display:flex; flex-direction:column; gap:12px; min-width:0}
+.card.done{border-color:var(--done)}
+.head{display:flex; justify-content:space-between; align-items:center; gap:10px}
+.head h2{margin:0; font-family:var(--display); font-size:1.35rem; font-weight:700; min-width:0; overflow-wrap:anywhere}
+.streak{font-size:.85rem; color:var(--muted); white-space:nowrap}
+.count{display:flex; align-items:baseline; gap:8px; flex-wrap:wrap}
+.count .cur{font-family:var(--display); font-weight:700; font-size:2.6rem; line-height:1}
+.card.done .cur{color:var(--done)}
+.count .of{color:var(--muted)}
+.bar{height:10px; background:var(--track); border-radius:6px; overflow:hidden}
+.bar b{display:block; height:100%; width:0; background:var(--accent); border-radius:6px; transition:width .25s}
+.card.done .bar b{background:var(--done)}
+.left{margin:0; color:var(--muted); font-size:.92rem}
+.card.done .left{color:var(--done); font-weight:600}
+.actions{display:flex; gap:8px; align-items:stretch}
+.btn{min-height:48px; border-radius:14px; border:1px solid var(--line); background:transparent; padding:0 16px; font-weight:600}
+.btn.primary{flex:1; background:var(--accent); color:var(--accent-ink); border-color:var(--accent); font-size:1.1rem}
+.btn.minus{width:56px; padding:0; font-size:1.2rem}
+.btn.ghost{color:var(--muted); font-weight:500}
+.btn.danger{color:var(--danger); border-color:var(--danger)}
+.week{display:flex; align-items:center; justify-content:space-between; gap:10px; color:var(--muted); font-size:.82rem}
+.dots{display:flex; gap:7px}
+.dot{width:14px; height:14px; border-radius:50%; border:2px solid var(--line); background:transparent; display:block}
+.dot.part{border-color:var(--accent)}
+.dot.on{background:var(--done); border-color:var(--done)}
+.dot.now{box-shadow:0 0 0 2px var(--surface), 0 0 0 4px var(--muted)}
+
+/* edit panel */
+.panel{background:var(--surface); border:1px dashed var(--muted); border-radius:18px; padding:16px; display:grid; grid-template-columns:1fr 1fr; gap:12px}
+.panel h2{grid-column:1/-1; margin:0; font-family:var(--display); font-size:1.2rem}
+.field{display:flex; flex-direction:column; gap:4px; min-width:0}
+.field.wide{grid-column:1/-1}
+.field label{font-size:.85rem; color:var(--muted)}
+.field input{min-height:46px; border-radius:12px; border:1px solid var(--line); background:var(--bg); padding:0 12px; width:100%; min-width:0}
+.panel .row{grid-column:1/-1; display:flex; gap:8px; flex-wrap:wrap}
+.panel .row .btn{flex:1}
+.err{grid-column:1/-1; margin:0; color:var(--danger); font-size:.9rem}
+.add{min-height:52px; border-radius:16px; border:1.5px dashed var(--muted); background:transparent; color:var(--ink); font-weight:600}
+.foot{margin:0; color:var(--muted); font-size:.82rem; text-align:center}
+@media (max-width:420px){
+  .panel{grid-template-columns:1fr}
+  .day h1{font-size:1.8rem}
+}
+@media (prefers-reduced-motion: reduce){ .seg b,.bar b{transition:none} }
+</style>
+
+<main lang="ar" dir="rtl">
+  <header class="hero">
+    <div class="daybar">
+      <div class="day"><h1 id="dayName"></h1><p id="dayDate"></p></div>
+      <div class="nav">
+        <button class="icon-btn" id="next" aria-label="اليوم اللي بعده">›</button>
+        <button class="icon-btn" id="prev" aria-label="اليوم اللي قبله">‹</button>
+      </div>
+    </div>
+    <button class="back" id="toToday" hidden>رجّعني لليوم</button>
+    <div class="summary">
+      <div class="summary-text"><span id="sumMain"></span><span id="sumSub"></span></div>
+      <div class="segs" id="segs"></div>
+    </div>
+  </header>
+  <section class="list" id="list" aria-label="مهام اليوم"></section>
+  <button class="add" id="add">+ مهمة جديدة</button>
+  <p class="foot" id="saveNote"></p>
+</main>
+
+<script>
+(function(){
+  var DEFAULTS = {v:1, tasks:[
+    {id:'t1', name:'قراءة', unit:'صفحة', target:4, step:1},
+    {id:'t2', name:'ذكر الله', unit:'مرة', target:1000, step:100}
+  ], logs:{}};
+  var LS_KEY = 'daily-targets-v1';
+  var state = null, view = todayKey(), lastToday = view, editing = null, confirmDel = null;
+  var mode = 'local', docRef = null, saving = false, pending = false, timer = null, dirty = false;
+
+  function pad(n){ return String(n).padStart(2,'0'); }
+  function keyOf(d){ return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+  function todayKey(){ return keyOf(new Date()); }
+  function parse(k){ var p=k.split('-').map(Number); return new Date(p[0],p[1]-1,p[2]); }
+  function addDays(k,n){ var p=k.split('-').map(Number); return keyOf(new Date(p[0],p[1]-1,p[2]+n)); }
+  function fmt(n){ return Number(n).toLocaleString('en-US'); }
+  function esc(s){ return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+  function clone(o){ return JSON.parse(JSON.stringify(o)); }
+  function normalize(s){
+    if(!s || typeof s!=='object') return clone(DEFAULTS);
+    if(!Array.isArray(s.tasks)) s.tasks=[];
+    if(!s.logs || typeof s.logs!=='object') s.logs={};
+    return s;
+  }
+  function loadLocal(){
+    try{ var raw=localStorage.getItem(LS_KEY); if(raw) return normalize(JSON.parse(raw)); }catch(e){}
+    return null;
+  }
+  function saveLocal(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){} }
+
+  function getCount(id,day){ return (state.logs[day] && state.logs[day][id]) || 0; }
+  function setCount(id,day,v){
+    if(!state.logs[day]) state.logs[day]={};
+    state.logs[day][id]=Math.max(0,Math.round(v));
+    changed();
+  }
+  function isDone(t,day){ return t.target>0 && getCount(t.id,day)>=t.target; }
+  function streak(t){
+    var day=todayKey(), n=0, guard=0;
+    if(!isDone(t,day)) day=addDays(day,-1);
+    while(isDone(t,day) && guard<3650){ n++; day=addDays(day,-1); guard++; }
+    return n;
+  }
+
+  /* saving */
+  function changed(){ dirty=true; saveLocal(); if(docRef){ clearTimeout(timer); timer=setTimeout(flush,500); } }
+  function flush(){
+    if(!docRef) return;
+    if(saving){ pending=true; return; }
+    saving=true;
+    docRef.set(clone(state)).then(function(){ dirty=false; mode='cloud'; }).catch(function(){ mode='local'; }).then(function(){
+      saving=false; if(pending){ pending=false; flush(); } else renderNote();
+    });
+  }
+  function renderNote(){
+    document.getElementById('saveNote').textContent = mode==='cloud'
+      ? 'بياناتك محفوظة على حسابك وبتظهر على أي جهاز.'
+      : 'بياناتك محفوظة على المتصفح ده بس.';
+  }
+
+  /* rendering */
+  function renderHead(){
+    var d=parse(view), isToday=view===todayKey();
+    var wd=new Intl.DateTimeFormat('ar-EG-u-nu-latn',{weekday:'long'}).format(d);
+    var dt=new Intl.DateTimeFormat('ar-EG-u-nu-latn',{day:'numeric',month:'long',year:'numeric'}).format(d);
+    document.getElementById('dayName').textContent = isToday ? 'النهارده ' + wd : wd;
+    document.getElementById('dayDate').textContent = dt;
+    document.getElementById('toToday').hidden = isToday;
+    document.getElementById('next').disabled = view>=todayKey();
+    var tasks=state.tasks, done=0, segs='';
+    tasks.forEach(function(t){
+      var c=getCount(t.id,view), p=t.target>0?Math.min(100,c/t.target*100):0, full=isDone(t,view);
+      if(full) done++;
+      segs+='<div class="seg'+(full?' full':'')+'"><b style="width:'+p+'%"></b></div>';
+    });
+    document.getElementById('segs').innerHTML=segs;
+    var main=document.getElementById('sumMain'), sub=document.getElementById('sumSub');
+    if(!tasks.length){ main.textContent='ضيف أول مهمة ليك'; sub.textContent=''; }
+    else{
+      main.innerHTML='خلّصت <span class="num">'+done+'</span> من <span class="num">'+tasks.length+'</span>';
+      sub.textContent = done===tasks.length ? 'يوم كامل، ربنا يتقبل' : (isToday?'كمّل، فاضل شوية':'');
+    }
+  }
+  function card(t){
+    if(editing===t.id) return panel(t);
+    var c=getCount(t.id,view), p=t.target>0?Math.min(100,c/t.target*100):0, done=isDone(t,view), st=streak(t), dots='';
+    for(var i=6;i>=0;i--){
+      var day=addDays(view,-i), n=getCount(t.id,day);
+      dots+='<i class="dot'+(isDone(t,day)?' on':(n>0?' part':''))+(i===0?' now':'')+'" title="'+day+'"></i>';
+    }
+    var left = done ? 'خلصت المهمة دي' : 'فاضل <span class="num">'+fmt(t.target-c)+'</span> '+esc(t.unit);
+    return '<article class="card'+(done?' done':'')+'" data-id="'+t.id+'">'+
+      '<div class="head"><h2>'+esc(t.name)+'</h2>'+(st>0?'<span class="streak"><span class="num">'+st+'</span> يوم ورا بعض</span>':'')+'</div>'+
+      '<div class="count"><span class="cur num">'+fmt(c)+'</span><span class="of">من <span class="num">'+fmt(t.target)+'</span> '+esc(t.unit)+'</span></div>'+
+      '<div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="'+t.target+'" aria-valuenow="'+c+'"><b style="width:'+p+'%"></b></div>'+
+      '<p class="left">'+left+'</p>'+
+      '<div class="actions">'+
+        '<button class="btn minus" data-act="dec" aria-label="نقّص">−</button>'+
+        '<button class="btn primary" data-act="inc">+ <span class="num">'+fmt(t.step)+'</span></button>'+
+        '<button class="btn ghost" data-act="edit">تعديل</button>'+
+      '</div>'+
+      '<div class="week"><span>آخر 7 أيام</span><span class="dots">'+dots+'</span></div>'+
+    '</article>';
+  }
+  function panel(t){
+    var isNew = t.id==='new';
+    var cur = isNew ? '' : getCount(t.id,view);
+    return '<form class="panel" data-id="'+t.id+'" novalidate>'+
+      '<h2>'+(isNew?'مهمة جديدة':'تعديل المهمة')+'</h2>'+
+      '<div class="field wide"><label for="f-name">اسم المهمة</label><input id="f-name" value="'+esc(t.name)+'" placeholder="مثلًا: مذاكرة"></div>'+
+      '<div class="field"><label for="f-target">التارجت اليومي</label><input id="f-target" type="number" inputmode="numeric" min="1" value="'+t.target+'"></div>'+
+      '<div class="field"><label for="f-unit">الوحدة</label><input id="f-unit" value="'+esc(t.unit)+'" placeholder="صفحة، مرة، دقيقة"></div>'+
+      '<div class="field"><label for="f-step">الزرار بيزوّد كام</label><input id="f-step" type="number" inputmode="numeric" min="1" value="'+t.step+'"></div>'+
+      (isNew?'':'<div class="field"><label for="f-cur">اللي عملته في اليوم ده</label><input id="f-cur" type="number" inputmode="numeric" min="0" value="'+cur+'"></div>')+
+      '<p class="err" id="f-err" hidden></p>'+
+      '<div class="row">'+
+        '<button class="btn primary" type="submit">حفظ</button>'+
+        '<button class="btn ghost" type="button" data-act="cancel">إلغاء</button>'+
+        (isNew?'':'<button class="btn danger" type="button" data-act="del">'+(confirmDel===t.id?'أكيد، امسحها':'مسح المهمة')+'</button>')+
+      '</div></form>';
+  }
+  function renderList(){
+    var html=state.tasks.map(card).join('');
+    if(editing==='new') html+=panel({id:'new',name:'',unit:'',target:1,step:1});
+    document.getElementById('list').innerHTML=html;
+    document.getElementById('add').hidden = editing==='new';
+  }
+  function render(){ renderHead(); renderList(); renderNote(); }
+
+  /* events */
+  function findTask(id){ return state.tasks.filter(function(t){return t.id===id;})[0]; }
+  document.getElementById('list').addEventListener('click',function(e){
+    var b=e.target.closest('[data-act]'); if(!b) return;
+    var host=b.closest('[data-id]'), id=host&&host.getAttribute('data-id'), act=b.getAttribute('data-act'), t=id&&findTask(id);
+    if(act==='inc'&&t){ setCount(id,view,getCount(id,view)+t.step); render(); }
+    else if(act==='dec'&&t){ setCount(id,view,getCount(id,view)-t.step); render(); }
+    else if(act==='edit'){ editing=id; confirmDel=null; renderList(); }
+    else if(act==='cancel'){ editing=null; confirmDel=null; renderList(); }
+    else if(act==='del'&&t){
+      if(confirmDel===id){
+        state.tasks=state.tasks.filter(function(x){return x.id!==id;});
+        Object.keys(state.logs).forEach(function(d){ delete state.logs[d][id]; });
+        editing=null; confirmDel=null; changed(); render();
+      } else { confirmDel=id; renderList(); }
+    }
+  });
+  document.getElementById('list').addEventListener('submit',function(e){
+    e.preventDefault();
+    var form=e.target, id=form.getAttribute('data-id');
+    var name=document.getElementById('f-name').value.trim();
+    var unit=document.getElementById('f-unit').value.trim();
+    var target=parseInt(document.getElementById('f-target').value,10);
+    var step=parseInt(document.getElementById('f-step').value,10);
+    var err=document.getElementById('f-err'), msg='';
+    if(!name) msg='اكتب اسم المهمة.';
+    else if(!(target>=1)) msg='التارجت لازم يكون رقم 1 أو أكتر.';
+    else if(!(step>=1)) msg='الزيادة لازم تكون رقم 1 أو أكتر.';
+    if(msg){ err.textContent=msg; err.hidden=false; return; }
+    if(id==='new'){
+      id='t'+Date.now().toString(36);
+      state.tasks.push({id:id,name:name,unit:unit,target:target,step:step});
+    } else {
+      var t=findTask(id); t.name=name; t.unit=unit; t.target=target; t.step=step;
+      var cf=document.getElementById('f-cur');
+      if(cf && cf.value!==''){ var v=parseInt(cf.value,10); if(v>=0) setCount(id,view,v); }
+    }
+    editing=null; confirmDel=null; changed(); render();
+  });
+  document.getElementById('add').addEventListener('click',function(){ editing='new'; renderList(); var f=document.getElementById('f-name'); if(f) f.focus(); });
+  document.getElementById('prev').addEventListener('click',function(){ view=addDays(view,-1); editing=null; render(); });
+  document.getElementById('next').addEventListener('click',function(){ if(view<todayKey()){ view=addDays(view,1); editing=null; render(); } });
+  document.getElementById('toToday').addEventListener('click',function(){ view=todayKey(); editing=null; render(); });
+
+  /* new day rollover */
+  function checkRollover(){
+    var t=todayKey();
+    if(t!==lastToday){ if(view===lastToday) view=t; lastToday=t; if(!editing) render(); }
+  }
+  setInterval(checkRollover,60000);
+  document.addEventListener('visibilitychange',function(){
+    if(document.visibilityState!=='visible') return;
+    checkRollover();
+    if(docRef && !dirty && !saving && !editing){
+      docRef.get().then(function(s){ if(s.exists && !dirty && !saving){ state=normalize(clone(s.data())); saveLocal(); render(); } }).catch(function(){});
+    }
+  });
+
+  /* start */
+  state = loadLocal() || clone(DEFAULTS);
+  render();
+  (async function(){
+    try{
+      var c=window.claude; if(!c||!c.use) return;
+      var db=await c.use('db'), user=await c.use('user');
+      if(!db||!user) return;
+      var uid=await user.id(); if(!uid) return;
+      docRef=db.doc('data/users/'+uid+'/tracker');
+      var snap=await docRef.get();
+      if(snap.exists){ if(!dirty){ state=normalize(clone(snap.data())); saveLocal(); } }
+      else { await docRef.set(clone(state)); }
+      mode='cloud';
+      if(dirty) flush();
+      render();
+    }catch(e){ docRef=null; mode='local'; renderNote(); }
+  })();
+})();
+</script>
+
+</body>
+</html>
