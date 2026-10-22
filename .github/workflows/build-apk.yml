@@ -20,7 +20,57 @@ jobs:
       - name: Prepare web files
         run: mkdir www && cp index.html www/
       - name: Use fixed signing key
-        run: mkdir -p ~/.android && cp debug.keystore ~/.android/debug.keystore
+        run: |
+          mkdir -p ~/.android
+          base64 -d > ~/.android/debug.keystore <<'KEYEOF'
+          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
+          KEYEOF
       - name: Install dependencies
         run: npm install
       - name: Add Android project
