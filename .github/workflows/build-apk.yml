@@ -19,10 +19,14 @@ jobs:
           java-version: 21
       - name: Prepare web files
         run: mkdir www && cp index.html www/
+      - name: Use fixed signing key
+        run: mkdir -p ~/.android && cp debug.keystore ~/.android/debug.keystore
       - name: Install dependencies
         run: npm install
       - name: Add Android project
         run: npx cap add android
+      - name: Allow vibration
+        run: sed -i 's#<uses-permission android:name="android.permission.INTERNET" />#&\n    <uses-permission android:name="android.permission.VIBRATE" />#' android/app/src/main/AndroidManifest.xml
       - name: Sync web files
         run: npx cap sync android
       - name: Build APK
