@@ -18,7 +18,7 @@ jobs:
           distribution: temurin
           java-version: 21
       - name: Prepare web files
-        run: mkdir www && cp index.html www/
+        run: mkdir -p www && cp index.html manifest.json sw.js www/
       - name: Use fixed signing key
         run: |
           mkdir -p ~/.android

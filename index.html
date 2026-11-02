@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0F6B63">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
 <style>:root{color-scheme:light}html,body{margin:0}</style>
 </head>
 <body>
@@ -901,48 +904,147 @@ fieldset.field{border:0; margin:0; padding:0}
     state.reminder.enabled=this.checked;
     $('remTimeRow').hidden=!this.checked;
     if(this.checked){
-      if('Notification' in window && Notification.permission==='default'){
+      if(!('Notification' in window)){
+        $('remMsg').textContent='المتصفح ده مش بيدعم الإشعارات. جرّب تفتح الصفحة في Chrome أو Firefox.';
+        $('remMsg').className='msg bad';
+        changed();
+        return;
+      }
+      if(Notification.permission==='denied'){
+        $('remMsg').textContent='الإشعارات مرفوضة. لازم تسمح بيها من إعدادات المتصفح وتعمل ريفريش.';
+        $('remMsg').className='msg bad';
+        changed();
+        return;
+      }
+      if(Notification.permission==='default'){
         Notification.requestPermission().then(function(p){
-          if(p==='denied'){
-            $('remMsg').textContent='لازم تسمح بالإشعارات من إعدادات المتصفح.';
+          if(p==='granted'){
+            $('remMsg').textContent='✅ هنفكّرك الساعة '+state.reminder.time;
+            $('remMsg').className='msg good';
+          } else {
+            $('remMsg').textContent='لازم تسمح بالإشعارات عشان التذكير يشتغل.';
             $('remMsg').className='msg bad';
           }
         });
+      } else {
+        $('remMsg').textContent='✅ هنفكّرك الساعة '+state.reminder.time;
+        $('remMsg').className='msg good';
       }
-      $('remMsg').textContent='✅ هنفكّرك الساعة '+state.reminder.time;
-      $('remMsg').className='msg good';
     } else {
       $('remMsg').textContent='';
+      cancelNativeReminder();
     }
     changed();
+    if(state.reminder.enabled) scheduleNativeReminder();
   });
   $('remTime').addEventListener('change',function(){
     state.reminder.time=this.value;
     $('remMsg').textContent='✅ هنفكّرك الساعة '+this.value;
     $('remMsg').className='msg good';
     changed();
+    scheduleNativeReminder();
   });
+  /* ---------- Capacitor / Native detection ---------- */
+  var isNative = typeof window.Capacitor !== 'undefined' && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
+  var capNotifications = null;
+  var swReg = null;
+
+  function initCapacitorNotifications(){
+    if(!isNative) return Promise.resolve();
+    return new Promise(function(resolve){
+      // Capacitor plugins are available on window.Capacitor.Plugins
+      try {
+        capNotifications = window.Capacitor.Plugins.LocalNotifications;
+        if(capNotifications){
+          capNotifications.requestPermissions().then(function(){ resolve(); }).catch(function(){ resolve(); });
+        } else { resolve(); }
+      } catch(e){ resolve(); }
+    });
+  }
+
+  function scheduleNativeReminder(){
+    if(!isNative || !capNotifications || !state.reminder.enabled) return;
+    // Cancel any existing reminder
+    capNotifications.getPending().then(function(pending){
+      if(pending.notifications.length > 0){
+        capNotifications.cancel({ notifications: pending.notifications });
+      }
+    }).catch(function(){});
+
+    // Schedule daily reminder
+    var parts = state.reminder.time.split(':');
+    var hour = parseInt(parts[0],10);
+    var minute = parseInt(parts[1],10);
+
+    // Set the next occurrence
+    var now = new Date();
+    var schedDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, minute, 0);
+    if(schedDate <= now) schedDate.setDate(schedDate.getDate() + 1);
+
+    capNotifications.schedule({
+      notifications: [{
+        title: 'تارجت اليوم 🎯',
+        body: 'فاكر مهامك؟ كمّل يومك! 💪',
+        id: 1,
+        schedule: {
+          at: schedDate,
+          every: 'day',
+          allowWhileIdle: true
+        },
+        sound: 'default',
+        smallIcon: 'ic_stat_icon_config_sample',
+        iconColor: '#0F6B63'
+      }]
+    }).catch(function(e){ console.log('Schedule error:', e); });
+  }
+
+  function cancelNativeReminder(){
+    if(!isNative || !capNotifications) return;
+    capNotifications.cancel({ notifications: [{ id: 1 }] }).catch(function(){});
+  }
+
+  function sendNotification(title, body){
+    if(isNative && capNotifications){
+      // On native, fire an immediate local notification
+      capNotifications.schedule({
+        notifications: [{
+          title: title,
+          body: body,
+          id: 9999,
+          sound: 'default',
+          smallIcon: 'ic_stat_icon_config_sample',
+          iconColor: '#0F6B63'
+        }]
+      }).catch(function(){});
+    } else if(swReg){
+      swReg.showNotification(title,{
+        body:body, tag:'daily-reminder', renotify:true, requireInteraction:false
+      });
+    } else {
+      try{ new Notification(title,{body:body, tag:'daily-reminder'}); }catch(e){}
+    }
+  }
+
   function checkReminder(){
     if(!state.reminder.enabled) return;
+    // On native, the OS handles scheduled notifications — skip JS-based check
+    if(isNative) return;
     if(!('Notification' in window) || Notification.permission!=='granted') return;
     var now=new Date();
-    var hhmm=pad(now.getHours())+':'+pad(now.getMinutes());
+    var nowMins=now.getHours()*60+now.getMinutes();
+    var parts=state.reminder.time.split(':');
+    var targetMins=parseInt(parts[0],10)*60+parseInt(parts[1],10);
     var today=todayKey();
-    if(hhmm===state.reminder.time && lastReminder!==today){
+    if(nowMins>=targetMins && nowMins<=targetMins+5 && lastReminder!==today){
       var acts=state.tasks.filter(function(t){ return active(t,today); });
       var remaining=acts.filter(function(t){ return !isDone(t,today); });
       if(remaining.length>0){
         lastReminder=today;
-        try{
-          new Notification('تارجت اليوم 🎯',{
-            body:'فاضلك '+remaining.length+' مهمة. كمّل يومك! 💪',
-            tag:'daily-reminder'
-          });
-        }catch(e){}
+        sendNotification('تارجت اليوم 🎯','فاضلك '+remaining.length+' مهمة. كمّل يومك! 💪');
       }
     }
   }
-  setInterval(checkReminder,60000);
+  setInterval(checkReminder,30000);
 
   /* ---------- backup ---------- */
   function setMsg(text,kind){ var m=$('bkMsg'); m.textContent=text; m.className='msg'+(kind?' '+kind:''); }
@@ -994,6 +1096,26 @@ fieldset.field{border:0; margin:0; padding:0}
   state = loadLocal() || normalize(clone(DEFAULTS));
   initReminder();
   render();
+  checkReminder();
+
+  // Init Capacitor notifications if on native
+  initCapacitorNotifications().then(function(){
+    if(state.reminder.enabled) scheduleNativeReminder();
+  });
+
+  // Register Service Worker for PWA + background notifications
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('./sw.js').then(function(reg){
+      swReg=reg;
+      // Update cache when new version available
+      reg.addEventListener('updatefound',function(){
+        var nw=reg.installing;
+        nw.addEventListener('statechange',function(){
+          if(nw.state==='activated') window.location.reload();
+        });
+      });
+    }).catch(function(e){ console.log('SW registration failed:',e); });
+  }
   (async function(){
     try{
       var c=window.claude; if(!c||!c.use) return;

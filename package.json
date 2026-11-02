@@ -2,9 +2,15 @@
   "name": "daily-targets",
   "version": "1.0.0",
   "private": true,
+  "scripts": {
+    "build": "powershell -Command \"Copy-Item index.html www/index.html -Force; Copy-Item manifest.json www/manifest.json -Force; Copy-Item sw.js www/sw.js -Force\"",
+    "sync": "npm run build && npx cap sync android",
+    "open": "npx cap open android"
+  },
   "dependencies": {
+    "@capacitor/android": "^7.0.0",
     "@capacitor/core": "^7.0.0",
-    "@capacitor/android": "^7.0.0"
+    "@capacitor/local-notifications": "^7.0.7"
   },
   "devDependencies": {
     "@capacitor/cli": "^7.0.0"
