@@ -472,20 +472,23 @@ fieldset.field{border:0; margin:0; padding:0}
 <div id="tasbeehModal" class="fullscreen-overlay" hidden>
   <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
     <div>
-      <h2 id="tasbeehTaskName" style="margin:0; font-family:var(--display); font-size:1.4rem;"></h2>
-      <p id="tasbeehTaskTarget" style="margin:2px 0 0; color:var(--muted); font-size:.9rem;"></p>
+      <h2 id="tasbeehTaskTitle" style="margin:0; font-family:var(--display); font-size:1.4rem;"></h2>
+      <p id="tasbeehSub" style="margin:2px 0 0; color:var(--muted); font-size:.9rem;"></p>
     </div>
     <button class="icon-btn" id="btnCloseTasbeeh" type="button" style="width:44px; height:44px;">✕</button>
   </div>
   <div class="tasbeeh-tap-zone" id="tasbeehTapZone">
     <div style="text-align:center;">
-      <span class="tasbeeh-huge-num num" id="tasbeehCurCount">0</span>
+      <span class="tasbeeh-huge-num num" id="tasbeehNum">0</span>
       <p style="margin:12px 0 0; color:var(--muted); font-size:1.05rem;">المس أي مكان في الشاشة للعد 📿</p>
     </div>
   </div>
+  <div style="width:100%; height:6px; background:var(--track); border-radius:3px; overflow:hidden; margin-top:8px;">
+    <div id="tasbeehProgress" style="height:100%; background:var(--accent); border-radius:3px; width:0%; transition:width .15s ease;"></div>
+  </div>
   <div style="display:flex; gap:10px; justify-content:center; align-items:center; padding-top:14px; border-top:1px dashed var(--line);">
-    <button class="btn" id="btnTasbeehMinus" style="flex:1; min-height:48px;">➖ نقّص</button>
-    <button class="btn" id="btnTasbeehReset" style="flex:1; min-height:48px;">🔄 تصفير</button>
+    <button class="btn" id="tasbeehMinusBtn" style="flex:1; min-height:48px;">➖ نقّص</button>
+    <button class="btn" id="tasbeehResetBtn" style="flex:1; min-height:48px;">🔄 تصفير</button>
     <button class="btn primary" id="btnTasbeehDone" style="flex:2; min-height:48px;">✅ تم وحفظ</button>
   </div>
 </div>
@@ -494,25 +497,25 @@ fieldset.field{border:0; margin:0; padding:0}
 <div id="pomodoroModal" class="fullscreen-overlay" hidden>
   <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
     <div>
-      <h2 id="pomoTaskName" style="margin:0; font-family:var(--display); font-size:1.4rem;"></h2>
-      <p style="margin:2px 0 0; color:var(--muted); font-size:.9rem;">جلسة تركيز بومودورو ⏱️</p>
+      <h2 id="pomoTaskTitle" style="margin:0; font-family:var(--display); font-size:1.4rem;"></h2>
+      <p style="margin:2px 0 0; color:var(--muted); font-size:.9rem;">جلسة تركيز بومودورو ⏱️ <span id="pomoIncUnit" style="color:var(--accent);"></span></p>
     </div>
-    <button class="icon-btn" id="btnClosePomo" type="button" style="width:44px; height:44px;">✕</button>
+    <button class="icon-btn" id="btnClosePomodoro" type="button" style="width:44px; height:44px;">✕</button>
   </div>
   <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;">
     <div class="chips" id="pomoPresets" style="margin-bottom:12px;">
-      <button class="chip-filter active" data-pomo-mins="25">25 دقيقة تركيز</button>
-      <button class="chip-filter" data-pomo-mins="15">15 دقيقة</button>
-      <button class="chip-filter" data-pomo-mins="5">5 دقائق راحة</button>
+      <button class="chip-filter active" data-pomo-min="25">25 دقيقة تركيز</button>
+      <button class="chip-filter" data-pomo-min="15">15 دقيقة</button>
+      <button class="chip-filter" data-pomo-min="5">5 دقائق راحة</button>
     </div>
     <div class="pomo-circle">
-      <span class="pomo-num num" id="pomoTimeDisplay">25:00</span>
-      <span id="pomoStatusText" style="font-size:.85rem; color:var(--muted); margin-top:4px;">جاهز للبدء</span>
+      <span class="pomo-num num" id="pomoTime">25:00</span>
+      <span id="pomoStatus" style="font-size:.85rem; color:var(--muted); margin-top:4px;">جاهز للبدء</span>
     </div>
   </div>
   <div style="display:flex; gap:10px; width:100%;">
-    <button class="btn primary" id="btnPomoStart" style="flex:2; min-height:50px; font-size:1.1rem;">▶️ ابدأ التركيز</button>
-    <button class="btn ghost" id="btnPomoReset" style="flex:1; min-height:50px;">🔄 إعادة</button>
+    <button class="btn primary" id="pomoStartBtn" style="flex:2; min-height:50px; font-size:1.1rem;">▶️ ابدأ التركيز</button>
+    <button class="btn ghost" id="pomoResetBtn" style="flex:1; min-height:50px;">🔄 إعادة</button>
   </div>
 </div>
 
@@ -523,7 +526,7 @@ fieldset.field{border:0; margin:0; padding:0}
       <h2 style="font-size:1.25rem;">📤 مشاركة الإنجاز</h2>
       <button class="icon-btn" id="btnCloseShareModal" type="button" style="width:36px; height:36px;">✕</button>
     </div>
-    <div id="shareCardContent" class="share-preview-card">
+    <div id="sharePreviewCard" class="share-preview-card">
       <div style="display:flex; justify-content:space-between; align-items:center;">
         <b style="font-size:1.2rem; color:var(--accent); font-family:var(--display);">تارجت اليوم 🎯</b>
         <span id="shareCardDate" style="font-size:.82rem; color:var(--muted);"></span>
@@ -1201,6 +1204,13 @@ fieldset.field{border:0; margin:0; padding:0}
       return;
     }
 
+    // Update Android home screen widget
+    if(window.AndroidWidget && typeof window.AndroidWidget.updateWidget === 'function'){
+      try {
+        window.AndroidWidget.updateWidget(pinned.text, '📌 ' + (pinned.cat || 'خاطرة'));
+      } catch(e){}
+    }
+
     if(isNativeApp()){
       var cap = getCapLocalNotifications();
       if(cap && cap.schedule){
@@ -1601,6 +1611,12 @@ fieldset.field{border:0; margin:0; padding:0}
     updateTasbeehUI();
     playSound('tap');
     showToast('🔄', 'تصفير العداد', 'تم تصفير عدد اليوم للمهمة');
+  });
+  $('btnTasbeehDone') && $('btnTasbeehDone').addEventListener('click', function(e){
+    e.stopPropagation();
+    playSound('complete');
+    closeTasbeeh();
+    showToast('✅', 'تم الحفظ', 'تم حفظ العدّ بنجاح');
   });
 
   /* ---------- pomodoro timer ---------- */
