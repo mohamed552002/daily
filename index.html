@@ -404,6 +404,13 @@ fieldset.field{border:0; margin:0; padding:0}
       <p class="msg" id="remMsg" role="status"></p>
     </div>
 
+    <div class="settings-card" id="updateCard">
+      <h3>🔄 التحديثات</h3>
+      <p class="sub">النسخة الحالية: <span id="currentVersion" class="num">1.0</span></p>
+      <div id="updateStatus" style="margin:8px 0;"></div>
+      <button class="btn primary" id="btnCheckUpdate" style="margin-top:4px;">🔍 فحص التحديثات</button>
+    </div>
+
     <div class="settings-card">
       <h3>💾 نسخة احتياطية</h3>
       <p class="sub">بياناتك محفوظة على الجهاز ده بس. انسخها واحفظها في ملاحظات أو ابعتها لنفسك.</p>
@@ -1425,6 +1432,104 @@ fieldset.field{border:0; margin:0; padding:0}
     if(state.soundEnabled) playSound('tap');
     showToast('🔔', 'المؤثرات الصوتية', state.soundEnabled ? 'تم تفعيل الأصوات' : 'تم كتم الأصوات');
   });
+
+  /* ---------- in-app update checker ---------- */
+  var APP_VERSION = '1.0';
+  var GITHUB_REPO = 'mohamed552002/daily';
+
+  function checkForUpdate(silent){
+    var statusEl = $('updateStatus');
+    if(!statusEl) return;
+    if(!silent){
+      statusEl.innerHTML = '<p style="color:var(--accent); font-size:.9rem;">⏳ جارٍ فحص التحديثات...</p>';
+    }
+    fetch('https://api.github.com/repos/' + GITHUB_REPO + '/releases', {
+      headers: { 'Accept': 'application/vnd.github.v3+json' }
+    })
+    .then(function(res){ return res.json(); })
+    .then(function(releases){
+      if(!Array.isArray(releases) || releases.length === 0){
+        if(!silent) statusEl.innerHTML = '<p style="color:var(--muted); font-size:.9rem;">✅ لا توجد تحديثات متاحة حالياً.</p>';
+        return;
+      }
+      // Find the latest non-draft, non-prerelease
+      var latest = null;
+      for(var i = 0; i < releases.length; i++){
+        if(!releases[i].draft && !releases[i].prerelease){
+          latest = releases[i];
+          break;
+        }
+      }
+      if(!latest){
+        if(!silent) statusEl.innerHTML = '<p style="color:var(--muted); font-size:.9rem;">✅ أنت على آخر إصدار.</p>';
+        return;
+      }
+
+      // Extract version number from tag_name like "v1.0.5" -> "1.0.5"
+      var remoteTag = latest.tag_name || '';
+      var remoteVersion = remoteTag.replace(/^v/, '');
+      
+      // Compare: extract the build number part
+      var localParts = APP_VERSION.split('.');
+      var remoteParts = remoteVersion.split('.');
+      var localBuild = parseInt(localParts[2] || '0', 10);
+      var remoteBuild = parseInt(remoteParts[2] || '0', 10);
+      
+      var isNewer = false;
+      // Compare major.minor first
+      var localMajor = parseInt(localParts[0] || '1', 10);
+      var localMinor = parseInt(localParts[1] || '0', 10);
+      var remoteMajor = parseInt(remoteParts[0] || '1', 10);
+      var remoteMinor = parseInt(remoteParts[1] || '0', 10);
+      if(remoteMajor > localMajor) isNewer = true;
+      else if(remoteMajor === localMajor && remoteMinor > localMinor) isNewer = true;
+      else if(remoteMajor === localMajor && remoteMinor === localMinor && remoteBuild > localBuild) isNewer = true;
+
+      if(isNewer){
+        // Find the APK asset download URL
+        var apkUrl = '';
+        if(latest.assets && latest.assets.length > 0){
+          for(var j = 0; j < latest.assets.length; j++){
+            if(latest.assets[j].name && latest.assets[j].name.indexOf('.apk') >= 0){
+              apkUrl = latest.assets[j].browser_download_url;
+              break;
+            }
+          }
+        }
+        var html = '<div style="background:var(--surface); border:2px solid var(--accent); border-radius:16px; padding:14px; margin:6px 0;">' +
+          '<p style="font-size:1rem; font-weight:600; color:var(--accent); margin:0 0 6px;">🎉 يتوفر تحديث جديد!</p>' +
+          '<p style="font-size:.88rem; color:var(--ink); margin:0 0 4px;">الإصدار الجديد: <span class="num">' + esc(remoteVersion) + '</span></p>' +
+          '<p style="font-size:.88rem; color:var(--ink); margin:0 0 4px;">إصدارك الحالي: <span class="num">' + esc(APP_VERSION) + '</span></p>' +
+          '<p style="font-size:.82rem; color:var(--muted); margin:0 0 10px;">التحديث فوق النسخة القديمة — بياناتك ومهامك وخواطرك محفوظة ومش هتتمسح 🔒</p>';
+        if(apkUrl){
+          html += '<a href="' + esc(apkUrl) + '" style="display:inline-block; background:var(--accent); color:var(--accent-ink); padding:10px 20px; border-radius:12px; text-decoration:none; font-weight:600; font-size:.95rem;">📥 تحميل التحديث</a>';
+        } else {
+          html += '<a href="' + esc(latest.html_url) + '" target="_blank" style="display:inline-block; background:var(--accent); color:var(--accent-ink); padding:10px 20px; border-radius:12px; text-decoration:none; font-weight:600; font-size:.95rem;">📥 فتح صفحة التحميل</a>';
+        }
+        html += '</div>';
+        statusEl.innerHTML = html;
+        if(!silent) showToast('🎉', 'تحديث جديد!', 'إصدار ' + remoteVersion + ' متاح للتحميل');
+      } else {
+        if(!silent){
+          statusEl.innerHTML = '<p style="color:var(--done); font-size:.9rem;">✅ أنت على آخر إصدار (' + esc(APP_VERSION) + '). لا تحديثات جديدة.</p>';
+          showToast('✅', 'آخر إصدار', 'أنت تستخدم أحدث نسخة من تارجت اليوم');
+        }
+      }
+    })
+    .catch(function(err){
+      console.log('Update check error:', err);
+      if(!silent){
+        statusEl.innerHTML = '<p style="color:var(--danger); font-size:.9rem;">⚠️ تعذر الاتصال بخادم التحديثات. تأكد من اتصالك بالإنترنت.</p>';
+      }
+    });
+  }
+
+  $('btnCheckUpdate') && $('btnCheckUpdate').addEventListener('click', function(){
+    checkForUpdate(false);
+  });
+
+  // Auto-check for updates silently once on app start (after 3 seconds)
+  setTimeout(function(){ checkForUpdate(true); }, 3000);
 
   /* ---------- fullscreen tasbeeh counter ---------- */
   function openTasbeeh(taskId){

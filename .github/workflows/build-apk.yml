@@ -19,6 +19,11 @@ jobs:
           java-version: 21
       - name: Prepare web files
         run: mkdir -p www && cp index.html manifest.json sw.js www/
+      - name: Stamp version into web app
+        run: |
+          sed -i "s/var APP_VERSION = '1.0';/var APP_VERSION = '1.0.${{ github.run_number }}';/" www/index.html
+          sed -i "s/النسخة الحالية: <span id=\"currentVersion\" class=\"num\">1.0<\/span>/النسخة الحالية: <span id=\"currentVersion\" class=\"num\">1.0.${{ github.run_number }}<\/span>/" www/index.html
+          echo "--- Stamped APP_VERSION = 1.0.${{ github.run_number }} ---"
       - name: Use fixed signing key
         run: |
           mkdir -p ~/.android
@@ -75,9 +80,15 @@ jobs:
         run: npm install
       - name: Add Android project
         run: npx cap add android
+      - name: Auto-increment versionCode
+        run: |
+          sed -i "s/versionCode 1/versionCode ${{ github.run_number }}/" android/app/build.gradle
+          sed -i "s/versionName \"1.0\"/versionName \"1.0.${{ github.run_number }}\"/" android/app/build.gradle
+          echo "--- build.gradle versionCode patched to ${{ github.run_number }} ---"
+          grep -n 'versionCode\|versionName' android/app/build.gradle
       - name: Configure Android permissions
         run: |
-          sed -i 's#<uses-permission android:name="android.permission.INTERNET" />#&\n    <uses-permission android:name="android.permission.VIBRATE" />\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />\n    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />\n    <uses-permission android:name="android.permission.WAKE_LOCK" />\n    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />\n    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />#' android/app/src/main/AndroidManifest.xml
+          sed -i 's#<uses-permission android:name="android.permission.INTERNET" />#&\n    <uses-permission android:name="android.permission.VIBRATE" />\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />\n    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />\n    <uses-permission android:name="android.permission.WAKE_LOCK" />\n    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />\n    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />\n    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />#' android/app/src/main/AndroidManifest.xml
           sed -i 's#android:name=".MainActivity"#& android:supportsPictureInPicture="true"#' android/app/src/main/AndroidManifest.xml
       - name: Patch MainActivity for Picture in Picture
         run: |
@@ -123,6 +134,12 @@ jobs:
       - name: Publish APK to Releases
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: apk-${{ github.run_number }}
-          name: تارجت اليوم (build ${{ github.run_number }})
+          tag_name: v1.0.${{ github.run_number }}
+          name: تارجت اليوم v1.0.${{ github.run_number }}
+          body: |
+            ### ✅ تحديث تارجت اليوم (بناء رقم ${{ github.run_number }})
+            
+            📥 حمّل ملف الـ APK وثبّته فوق النسخة القديمة مباشرة — بياناتك ومهامك محفوظة ولن تُمسح.
+            
+            🔄 التطبيق كمان هيخبرك بالتحديثات الجديدة تلقائياً من داخل صفحة "المزيد".
           files: android/app/build/outputs/apk/debug/app-debug.apk
