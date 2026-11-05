@@ -48,8 +48,8 @@ self.addEventListener('message', function(e) {
   if (e.data && e.data.type === 'REMINDER') {
     self.registration.showNotification(e.data.title, {
       body: e.data.body,
-      icon: '🎯',
-      tag: 'daily-reminder',
+      icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🎯</text></svg>',
+      tag: e.data.tag || 'daily-reminder',
       renotify: true,
       requireInteraction: false
     });

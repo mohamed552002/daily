@@ -75,8 +75,9 @@ jobs:
         run: npm install
       - name: Add Android project
         run: npx cap add android
-      - name: Allow vibration
-        run: sed -i 's#<uses-permission android:name="android.permission.INTERNET" />#&\n    <uses-permission android:name="android.permission.VIBRATE" />#' android/app/src/main/AndroidManifest.xml
+      - name: Configure Android permissions
+        run: |
+          sed -i 's#<uses-permission android:name="android.permission.INTERNET" />#&\n    <uses-permission android:name="android.permission.VIBRATE" />\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />\n    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />\n    <uses-permission android:name="android.permission.WAKE_LOCK" />\n    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />#' android/app/src/main/AndroidManifest.xml
       - name: Sync web files
         run: npx cap sync android
       - name: Build APK

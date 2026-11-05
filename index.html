@@ -331,9 +331,9 @@ fieldset.field{border:0; margin:0; padding:0}
     {id:'t5', icon:'📋', name:'متعدد المهام', desc:'عندك 5 مهام أو أكتر'}
   ];
   var DEFAULTS = {v:3, tasks:[
-    {id:'t1', name:'قراءة', icon:'📖', unit:'صفحة', target:4, step:1, days:ALL.slice()},
-    {id:'t2', name:'ذكر الله', icon:'📿', unit:'مرة', target:1000, step:100, days:ALL.slice()}
-  ], logs:{}, rest:{}, badges:{}, reminder:{enabled:false, time:'21:00'}};
+    {id:'t1', name:'قراءة', icon:'📖', unit:'صفحة', target:4, step:1, days:ALL.slice(), remTime:''},
+    {id:'t2', name:'ذكر الله', icon:'📿', unit:'مرة', target:1000, step:100, days:ALL.slice(), remTime:''}
+  ], logs:{}, rest:{}, badges:{}, reminder:{enabled:false, time:'21:00'}, remindedToday:{}};
 
   var state = null, view = todayKey(), lastToday = view, tab = 'today';
   var editing = null, confirmDel = null, restoreArmed = false, restoreTimer = null;
@@ -358,12 +358,14 @@ fieldset.field{border:0; margin:0; padding:0}
       return t && typeof t.id==='string' && typeof t.name==='string' && t.name.trim();
     }).map(function(t){
       var days = Array.isArray(t.days) ? t.days.filter(function(d){ return d>=0 && d<=6 && d%1===0; }) : [];
+      var remTime = (typeof t.remTime==='string' && /^\d{2}:\d{2}$/.test(t.remTime)) ? t.remTime : '';
       return {
         id:t.id, name:String(t.name), icon:typeof t.icon==='string'?t.icon:'',
         unit:typeof t.unit==='string'?t.unit:'',
         target:Math.max(1,Math.round(Number(t.target))||1),
         step:Math.max(1,Math.round(Number(t.step))||1),
-        days:days.length?days:ALL.slice()
+        days:days.length?days:ALL.slice(),
+        remTime:remTime
       };
     });
     var logs = {};
@@ -385,7 +387,13 @@ fieldset.field{border:0; margin:0; padding:0}
       reminder.enabled = !!s.reminder.enabled;
       if(typeof s.reminder.time==='string' && /^\d{2}:\d{2}$/.test(s.reminder.time)) reminder.time = s.reminder.time;
     }
-    return {v:3, tasks:tasks, logs:logs, rest:rest, badges:badges, reminder:reminder};
+    var remindedToday = {};
+    if(s.remindedToday && typeof s.remindedToday==='object'){
+      Object.keys(s.remindedToday).forEach(function(k){
+        if(typeof s.remindedToday[k]==='string') remindedToday[k] = s.remindedToday[k];
+      });
+    }
+    return {v:3, tasks:tasks, logs:logs, rest:rest, badges:badges, reminder:reminder, remindedToday:remindedToday};
   }
   function loadLocal(){
     try{ var raw=localStorage.getItem(LS_KEY); if(raw) return normalize(JSON.parse(raw)); }catch(e){}
@@ -613,8 +621,9 @@ fieldset.field{border:0; margin:0; padding:0}
     if(editing===t.id) return panel(t);
     var iconHtml = t.icon ? '<span class="task-icon">'+t.icon+'</span>' : '';
     var dragHtml = '<button class="drag-handle" aria-label="ترتيب" data-drag>⠿</button>';
+    var remBadge = t.remTime ? '<span class="streak" style="margin-inline-start:4px" title="تذكير الساعة '+esc(t.remTime)+'">🔔 <span class="num">'+esc(t.remTime)+'</span></span>' : '';
     if(!scheduled(t,view)){
-      return '<article class="card off" data-id="'+t.id+'"><div class="head">'+dragHtml+'<h2>'+iconHtml+esc(t.name)+'</h2><span class="streak">مش في جدول اليوم ده</span></div>'+
+      return '<article class="card off" data-id="'+t.id+'"><div class="head">'+dragHtml+'<h2>'+iconHtml+esc(t.name)+'</h2>'+remBadge+'<span class="streak">مش في جدول اليوم ده</span></div>'+
         '<div class="actions2"><button class="btn ghost" data-act="edit">تعديل</button></div></article>';
     }
     var c=getCount(t.id,view), p=Math.min(100,c/t.target*100), done=isDone(t,view), st=currentStreak(t), dots='';
@@ -624,7 +633,7 @@ fieldset.field{border:0; margin:0; padding:0}
     }
     var left = done ? '✅ خلصت المهمة دي' : 'فاضل <span class="num">'+fmt(t.target-c)+'</span> '+esc(t.unit);
     return '<article class="card'+(done?' done':'')+'" data-id="'+t.id+'">'+
-      '<div class="head">'+dragHtml+'<h2>'+iconHtml+esc(t.name)+'</h2>'+(st>0?'<span class="streak"><span class="num">'+st+'</span> يوم 🔥</span>':'')+' </div>'+
+      '<div class="head">'+dragHtml+'<h2>'+iconHtml+esc(t.name)+'</h2>'+(st>0?'<span class="streak"><span class="num">'+st+'</span> يوم 🔥</span>':'')+remBadge+'</div>'+
       '<div class="count"><span class="cur num">'+fmt(c)+'</span><span class="of">من <span class="num">'+fmt(t.target)+'</span> '+esc(t.unit)+'</span></div>'+
       '<div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="'+t.target+'" aria-valuenow="'+c+'"><b style="width:'+p+'%"></b></div>'+
       '<p class="left">'+left+'</p>'+
@@ -640,6 +649,8 @@ fieldset.field{border:0; margin:0; padding:0}
   function panel(t){
     var isNew = t.id==='new';
     var cur = isNew ? '' : getCount(t.id,view);
+    var hasRem = !!t.remTime;
+    var remVal = t.remTime || '20:00';
     var chips = ORDER.map(function(d){
       return '<label class="chip"><input type="checkbox" id="f-d'+d+'" value="'+d+'"'+(t.days.indexOf(d)>=0?' checked':'')+'><span>'+WD_SHORT[d]+'</span></label>';
     }).join('');
@@ -656,6 +667,17 @@ fieldset.field{border:0; margin:0; padding:0}
       (isNew?'':'<div class="field"><label for="f-cur">اللي عملته في اليوم ده</label><input id="f-cur" type="number" inputmode="numeric" min="0" value="'+cur+'"></div>')+
       '<fieldset class="field wide"><legend>أيقونة</legend><div class="chips emoji-chips">'+emojiChips+'</div></fieldset>'+
       '<fieldset class="field wide"><legend>أيام المهمة</legend><div class="chips">'+chips+'</div></fieldset>'+
+      '<div class="field wide" style="background:var(--bg); padding:12px 14px; border-radius:14px; border:1px solid var(--line);">'+
+        '<label class="switch">'+
+          '<input type="checkbox" id="f-rem-enable"'+(hasRem?' checked':'')+'>'+
+          '<span>🔔 تذكير يومي للمهمة دي</span>'+
+          '<span class="toggle-track"></span>'+
+        '</label>'+
+        '<div id="f-rem-box"'+(hasRem?'':' hidden')+' style="margin-top:10px; display:flex; align-items:center; gap:10px;">'+
+          '<label for="f-rem-time" style="font-size:.85rem; color:var(--muted)">الساعة</label>'+
+          '<input id="f-rem-time" type="time" value="'+remVal+'" style="min-height:42px; border-radius:10px; border:1px solid var(--line); background:var(--surface); padding:0 12px; font-size:1rem">'+
+        '</div>'+
+      '</div>'+
       '<p class="err" id="f-err" hidden></p>'+
       '<div class="row">'+
         '<button class="btn primary" type="submit">حفظ</button>'+
@@ -666,7 +688,7 @@ fieldset.field{border:0; margin:0; padding:0}
 
   function renderList(){
     var html=state.tasks.map(card).join('');
-    if(editing==='new') html+=panel({id:'new',name:'',icon:'',unit:'',target:1,step:1,days:ALL.slice()});
+    if(editing==='new') html+=panel({id:'new',name:'',icon:'',unit:'',target:1,step:1,days:ALL.slice(),remTime:''});
     $('list').innerHTML=html;
     $('add').hidden = editing==='new';
   }
@@ -756,8 +778,9 @@ fieldset.field{border:0; margin:0; padding:0}
       }catch(e){}
       checkCelebration();
       checkBadges();
+      syncAllReminders();
     }
-    else if(act==='dec'&&t){ setCount(id,view,getCount(id,view)-t.step); render(); }
+    else if(act==='dec'&&t){ setCount(id,view,getCount(id,view)-t.step); render(); syncAllReminders(); }
     else if(act==='edit'){ editing=id; confirmDel=null; renderList(); }
     else if(act==='cancel'){ editing=null; confirmDel=null; renderList(); }
     else if(act==='del'&&t){
@@ -765,7 +788,17 @@ fieldset.field{border:0; margin:0; padding:0}
         state.tasks=state.tasks.filter(function(x){return x.id!==id;});
         Object.keys(state.logs).forEach(function(d){ delete state.logs[d][id]; });
         editing=null; confirmDel=null; changed(); render();
+        syncAllReminders();
       } else { confirmDel=id; renderList(); }
+    }
+  });
+  $('list').addEventListener('change',function(e){
+    if(e.target && e.target.id==='f-rem-enable'){
+      var box=$('f-rem-box');
+      if(box) box.hidden = !e.target.checked;
+      if(e.target.checked){
+        requestNotifyPermission();
+      }
     }
   });
   $('list').addEventListener('submit',function(e){
@@ -776,6 +809,8 @@ fieldset.field{border:0; margin:0; padding:0}
     var days=ALL.filter(function(d){ return $('f-d'+d).checked; });
     var iconEl=form.querySelector('input[name="f-icon"]:checked');
     var icon=iconEl?iconEl.value:'';
+    var remEnable = $('f-rem-enable') && $('f-rem-enable').checked;
+    var remTime = remEnable ? ($('f-rem-time') ? $('f-rem-time').value : '20:00') : '';
     var err=$('f-err'), msg='';
     if(!name) msg='اكتب اسم المهمة.';
     else if(!(target>=1)) msg='التارجت لازم يكون رقم 1 أو أكتر.';
@@ -784,13 +819,14 @@ fieldset.field{border:0; margin:0; padding:0}
     if(msg){ err.textContent=msg; err.hidden=false; return; }
     if(id==='new'){
       id='t'+Date.now().toString(36);
-      state.tasks.push({id:id,name:name,icon:icon,unit:unit,target:target,step:step,days:days});
+      state.tasks.push({id:id,name:name,icon:icon,unit:unit,target:target,step:step,days:days,remTime:remTime});
     } else {
-      var t=findTask(id); t.name=name; t.icon=icon; t.unit=unit; t.target=target; t.step=step; t.days=days;
+      var t=findTask(id); t.name=name; t.icon=icon; t.unit=unit; t.target=target; t.step=step; t.days=days; t.remTime=remTime;
       var cf=$('f-cur');
       if(cf && cf.value!==''){ var v=parseInt(cf.value,10); if(v>=0) setCount(id,view,v); }
     }
     editing=null; confirmDel=null; changed(); render();
+    syncAllReminders();
     checkBadges();
   });
   $('add').addEventListener('click',function(){ editing='new'; renderList(); var f=$('f-name'); if(f) f.focus(); });
@@ -890,161 +926,298 @@ fieldset.field{border:0; margin:0; padding:0}
     });
   })();
 
-  /* ---------- reminders ---------- */
-  function initReminder(){
-    $('remToggle').checked=state.reminder.enabled;
-    $('remTime').value=state.reminder.time;
-    $('remTimeRow').hidden=!state.reminder.enabled;
-    if(state.reminder.enabled){
-      $('remMsg').textContent='هنفكّرك الساعة '+state.reminder.time;
-      $('remMsg').className='msg good';
-    }
-  }
-  $('remToggle').addEventListener('change',function(){
-    state.reminder.enabled=this.checked;
-    $('remTimeRow').hidden=!this.checked;
-    if(this.checked){
-      if(!('Notification' in window)){
-        $('remMsg').textContent='المتصفح ده مش بيدعم الإشعارات. جرّب تفتح الصفحة في Chrome أو Firefox.';
-        $('remMsg').className='msg bad';
-        changed();
-        return;
-      }
-      if(Notification.permission==='denied'){
-        $('remMsg').textContent='الإشعارات مرفوضة. لازم تسمح بيها من إعدادات المتصفح وتعمل ريفريش.';
-        $('remMsg').className='msg bad';
-        changed();
-        return;
-      }
-      if(Notification.permission==='default'){
-        Notification.requestPermission().then(function(p){
-          if(p==='granted'){
-            $('remMsg').textContent='✅ هنفكّرك الساعة '+state.reminder.time;
-            $('remMsg').className='msg good';
-          } else {
-            $('remMsg').textContent='لازم تسمح بالإشعارات عشان التذكير يشتغل.';
-            $('remMsg').className='msg bad';
-          }
-        });
-      } else {
-        $('remMsg').textContent='✅ هنفكّرك الساعة '+state.reminder.time;
-        $('remMsg').className='msg good';
-      }
-    } else {
-      $('remMsg').textContent='';
-      cancelNativeReminder();
-    }
-    changed();
-    if(state.reminder.enabled) scheduleNativeReminder();
-  });
-  $('remTime').addEventListener('change',function(){
-    state.reminder.time=this.value;
-    $('remMsg').textContent='✅ هنفكّرك الساعة '+this.value;
-    $('remMsg').className='msg good';
-    changed();
-    scheduleNativeReminder();
-  });
-  /* ---------- Capacitor / Native detection ---------- */
-  var isNative = typeof window.Capacitor !== 'undefined' && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
-  var capNotifications = null;
+  /* ---------- reminders & notifications engine ---------- */
   var swReg = null;
 
-  function initCapacitorNotifications(){
-    if(!isNative) return Promise.resolve();
-    return new Promise(function(resolve){
-      // Capacitor plugins are available on window.Capacitor.Plugins
-      try {
-        capNotifications = window.Capacitor.Plugins.LocalNotifications;
-        if(capNotifications){
-          capNotifications.requestPermissions().then(function(){ resolve(); }).catch(function(){ resolve(); });
-        } else { resolve(); }
-      } catch(e){ resolve(); }
-    });
-  }
-
-  function scheduleNativeReminder(){
-    if(!isNative || !capNotifications || !state.reminder.enabled) return;
-    // Cancel any existing reminder
-    capNotifications.getPending().then(function(pending){
-      if(pending.notifications.length > 0){
-        capNotifications.cancel({ notifications: pending.notifications });
-      }
-    }).catch(function(){});
-
-    // Schedule daily reminder
-    var parts = state.reminder.time.split(':');
-    var hour = parseInt(parts[0],10);
-    var minute = parseInt(parts[1],10);
-
-    // Set the next occurrence
-    var now = new Date();
-    var schedDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, minute, 0);
-    if(schedDate <= now) schedDate.setDate(schedDate.getDate() + 1);
-
-    capNotifications.schedule({
-      notifications: [{
-        title: 'تارجت اليوم 🎯',
-        body: 'فاكر مهامك؟ كمّل يومك! 💪',
-        id: 1,
-        schedule: {
-          at: schedDate,
-          every: 'day',
-          allowWhileIdle: true
-        },
-        sound: 'default',
-        smallIcon: 'ic_stat_icon_config_sample',
-        iconColor: '#0F6B63'
-      }]
-    }).catch(function(e){ console.log('Schedule error:', e); });
-  }
-
-  function cancelNativeReminder(){
-    if(!isNative || !capNotifications) return;
-    capNotifications.cancel({ notifications: [{ id: 1 }] }).catch(function(){});
-  }
-
-  function sendNotification(title, body){
-    if(isNative && capNotifications){
-      // On native, fire an immediate local notification
-      capNotifications.schedule({
-        notifications: [{
-          title: title,
-          body: body,
-          id: 9999,
-          sound: 'default',
-          smallIcon: 'ic_stat_icon_config_sample',
-          iconColor: '#0F6B63'
-        }]
-      }).catch(function(){});
-    } else if(swReg){
-      swReg.showNotification(title,{
-        body:body, tag:'daily-reminder', renotify:true, requireInteraction:false
-      });
-    } else {
-      try{ new Notification(title,{body:body, tag:'daily-reminder'}); }catch(e){}
+  function hashCode(str){
+    var hash = 0;
+    if(!str || !str.length) return 1;
+    for(var i=0; i<str.length; i++){
+      hash = ((hash << 5) - hash) + str.charCodeAt(i);
+      hash |= 0;
     }
+    return Math.abs(hash);
+  }
+
+  function getCapacitor(){
+    return (typeof window !== 'undefined' && window.Capacitor) ? window.Capacitor : null;
+  }
+
+  function isNativeApp(){
+    var cap = getCapacitor();
+    return !!(cap && cap.isNativePlatform && cap.isNativePlatform());
+  }
+
+  function getCapLocalNotifications(){
+    var cap = getCapacitor();
+    if(!cap) return null;
+    if(cap.Plugins && cap.Plugins.LocalNotifications) return cap.Plugins.LocalNotifications;
+    if(cap.registerPlugin){
+      try { return cap.registerPlugin('LocalNotifications'); } catch(e){}
+    }
+    return null;
+  }
+
+  function ensureNotificationChannel(){
+    var cap = getCapLocalNotifications();
+    if(cap && cap.createChannel){
+      cap.createChannel({
+        id: 'daily-targets-channel-v2',
+        name: 'تذكيرات تارجت اليوم',
+        description: 'إشعارات وتنبيهات المهام اليومية',
+        importance: 5,
+        visibility: 1,
+        sound: 'default',
+        vibration: true,
+        lights: true,
+        lightColor: '#0F6B63'
+      }).catch(function(){});
+    }
+  }
+
+  function requestNotifyPermission(){
+    if(isNativeApp()){
+      var cap = getCapLocalNotifications();
+      if(cap && cap.requestPermissions){
+        return cap.requestPermissions().then(function(res){
+          ensureNotificationChannel();
+          return res && (res.display === 'granted');
+        }).catch(function(){ return false; });
+      }
+    }
+    if('Notification' in window){
+      if(Notification.permission === 'granted') return Promise.resolve(true);
+      if(Notification.permission !== 'denied'){
+        return Notification.requestPermission().then(function(p){
+          return p === 'granted';
+        }).catch(function(){ return false; });
+      }
+    }
+    return Promise.resolve(false);
+  }
+
+  function sendNotification(title, body, tag){
+    tag = tag || 'daily-reminder';
+    var iconSvg = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🎯</text></svg>';
+
+    if(isNativeApp()){
+      var cap = getCapLocalNotifications();
+      if(cap && cap.schedule){
+        ensureNotificationChannel();
+        cap.schedule({
+          notifications: [{
+            title: title,
+            body: body,
+            id: (hashCode(tag) % 900000) + 5000,
+            channelId: 'daily-targets-channel-v2',
+            sound: 'default',
+            iconColor: '#0F6B63'
+          }]
+        }).catch(function(){});
+        return;
+      }
+    }
+
+    if(swReg && swReg.showNotification){
+      swReg.showNotification(title, {
+        body: body,
+        tag: tag,
+        renotify: true,
+        requireInteraction: false,
+        icon: iconSvg,
+        badge: iconSvg
+      }).catch(function(){
+        try { new Notification(title, { body: body, tag: tag, icon: iconSvg }); } catch(e){}
+      });
+    } else if('Notification' in window && Notification.permission === 'granted'){
+      try { new Notification(title, { body: body, tag: tag, icon: iconSvg }); } catch(e){}
+    }
+  }
+
+  function syncAllReminders(){
+    // 1. If Native Android (Capacitor), schedule system alarms for background delivery
+    if(isNativeApp()){
+      var cap = getCapLocalNotifications();
+      if(cap && cap.schedule){
+        ensureNotificationChannel();
+        var notificationsToSchedule = [];
+        var today = todayKey();
+        var now = new Date();
+
+        // Schedule per-task reminders
+        state.tasks.forEach(function(t){
+          if(!t.remTime || !scheduled(t, today) || isRest(today)) return;
+          var parts = t.remTime.split(':');
+          var hour = parseInt(parts[0], 10);
+          var minute = parseInt(parts[1], 10);
+          var schedDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, minute, 0, 0);
+
+          if(schedDate <= now || isDone(t, today)){
+            schedDate.setDate(schedDate.getDate() + 1);
+          }
+
+          var notifId = (hashCode('task_' + t.id) % 900000) + 1000;
+          notificationsToSchedule.push({
+            id: notifId,
+            title: (t.icon ? t.icon + ' ' : '') + 'تذكير: ' + t.name,
+            body: 'جه وقت ' + t.name + '! تارجت اليوم: ' + fmt(t.target) + ' ' + (t.unit || '') + ' 💪',
+            channelId: 'daily-targets-channel-v2',
+            schedule: {
+              at: schedDate,
+              every: 'day',
+              allowWhileIdle: true
+            },
+            sound: 'default',
+            iconColor: '#0F6B63',
+            extra: { taskId: t.id }
+          });
+        });
+
+        // Schedule global reminder
+        if(state.reminder && state.reminder.enabled && state.reminder.time){
+          var parts = state.reminder.time.split(':');
+          var hour = parseInt(parts[0], 10);
+          var minute = parseInt(parts[1], 10);
+          var schedDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, minute, 0, 0);
+          if(schedDate <= now){
+            schedDate.setDate(schedDate.getDate() + 1);
+          }
+          notificationsToSchedule.push({
+            id: 1,
+            title: 'تارجت اليوم 🎯',
+            body: 'فاكر مهامك النهارده؟ كمّل يومك وحقق التارجت! 💪',
+            channelId: 'daily-targets-channel-v2',
+            schedule: {
+              at: schedDate,
+              every: 'day',
+              allowWhileIdle: true
+            },
+            sound: 'default',
+            iconColor: '#0F6B63'
+          });
+        }
+
+        cap.getPending().then(function(res){
+          var pending = (res && res.notifications) ? res.notifications : [];
+          if(pending.length > 0){
+            return cap.cancel({ notifications: pending });
+          }
+        }).then(function(){
+          if(notificationsToSchedule.length > 0){
+            return cap.schedule({ notifications: notificationsToSchedule });
+          }
+        }).catch(function(e){ console.log('Schedule sync error:', e); });
+      }
+    }
+
+    // 2. Also run in-app check
+    checkReminder();
   }
 
   function checkReminder(){
-    if(!state.reminder.enabled) return;
-    // On native, the OS handles scheduled notifications — skip JS-based check
-    if(isNative) return;
-    if(!('Notification' in window) || Notification.permission!=='granted') return;
-    var now=new Date();
-    var nowMins=now.getHours()*60+now.getMinutes();
-    var parts=state.reminder.time.split(':');
-    var targetMins=parseInt(parts[0],10)*60+parseInt(parts[1],10);
-    var today=todayKey();
-    if(nowMins>=targetMins && nowMins<=targetMins+5 && lastReminder!==today){
-      var acts=state.tasks.filter(function(t){ return active(t,today); });
-      var remaining=acts.filter(function(t){ return !isDone(t,today); });
-      if(remaining.length>0){
-        lastReminder=today;
-        sendNotification('تارجت اليوم 🎯','فاضلك '+remaining.length+' مهمة. كمّل يومك! 💪');
+    var today = todayKey();
+    var now = new Date();
+    var nowMins = now.getHours() * 60 + now.getMinutes();
+
+    if(!state.remindedToday || typeof state.remindedToday !== 'object'){
+      state.remindedToday = {};
+    }
+
+    // Clean up old dates from remindedToday to prevent memory growth
+    Object.keys(state.remindedToday).forEach(function(k){
+      if(state.remindedToday[k] !== today){
+        delete state.remindedToday[k];
+      }
+    });
+
+    var triggeredAny = false;
+
+    // A) Check task-level reminders
+    state.tasks.forEach(function(t){
+      if(!t.remTime || !active(t, today)) return;
+      if(isDone(t, today)) return; // Don't remind if done
+
+      var parts = t.remTime.split(':');
+      var taskMins = parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+      var key = 'task_' + t.id;
+
+      if(nowMins >= taskMins && state.remindedToday[key] !== today){
+        var c = getCount(t.id, today);
+        var remaining = Math.max(1, t.target - c);
+        sendNotification(
+          (t.icon ? t.icon + ' ' : '') + 'تذكير: ' + t.name,
+          'فاضلك ' + fmt(remaining) + ' ' + (t.unit || '') + '. كمّل هدفك اليوم! 💪',
+          key
+        );
+        state.remindedToday[key] = today;
+        triggeredAny = true;
+      }
+    });
+
+    // B) Check global reminder
+    if(state.reminder && state.reminder.enabled && state.reminder.time){
+      var parts = state.reminder.time.split(':');
+      var globMins = parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+      if(nowMins >= globMins && state.remindedToday['global'] !== today){
+        var acts = state.tasks.filter(function(t){ return active(t, today); });
+        var remainingTasks = acts.filter(function(t){ return !isDone(t, today); });
+        if(remainingTasks.length > 0){
+          sendNotification(
+            'تارجت اليوم 🎯',
+            'فاضلك ' + remainingTasks.length + ' مهمة مخلصتهاش. كمّل يومك! 💪',
+            'global'
+          );
+          state.remindedToday['global'] = today;
+          triggeredAny = true;
+        }
       }
     }
+
+    if(triggeredAny){
+      changed();
+    }
   }
-  setInterval(checkReminder,30000);
+  setInterval(checkReminder, 20000);
+
+  function initReminder(){
+    $('remToggle').checked = !!state.reminder.enabled;
+    $('remTime').value = state.reminder.time || '21:00';
+    $('remTimeRow').hidden = !state.reminder.enabled;
+    if(state.reminder.enabled){
+      $('remMsg').textContent = '✅ هنفكّرك الساعة ' + state.reminder.time;
+      $('remMsg').className = 'msg good';
+    } else {
+      $('remMsg').textContent = '';
+    }
+  }
+
+  $('remToggle').addEventListener('change',function(){
+    state.reminder.enabled = this.checked;
+    $('remTimeRow').hidden = !this.checked;
+    if(this.checked){
+      requestNotifyPermission().then(function(granted){
+        if(!granted && !isNativeApp() && 'Notification' in window && Notification.permission === 'denied'){
+          $('remMsg').textContent = 'الإشعارات مرفوضة. اسمح بيها من إعدادات المتصفح.';
+          $('remMsg').className = 'msg bad';
+        } else {
+          $('remMsg').textContent = '✅ هنفكّرك الساعة ' + state.reminder.time;
+          $('remMsg').className = 'msg good';
+        }
+      });
+    } else {
+      $('remMsg').textContent = '';
+    }
+    changed();
+    syncAllReminders();
+  });
+
+  $('remTime').addEventListener('change',function(){
+    state.reminder.time = this.value;
+    $('remMsg').textContent = '✅ هنفكّرك الساعة ' + this.value;
+    $('remMsg').className = 'msg good';
+    changed();
+    syncAllReminders();
+  });
 
   /* ---------- backup ---------- */
   function setMsg(text,kind){ var m=$('bkMsg'); m.textContent=text; m.className='msg'+(kind?' '+kind:''); }
@@ -1075,18 +1248,18 @@ fieldset.field{border:0; margin:0; padding:0}
       clearTimeout(restoreTimer); restoreTimer=setTimeout(function(){ disarm(); setMsg('',''); },7000);
       return;
     }
-    state=n; disarm(); changed(); setMsg('اتسترجعت بياناتك ✅','good'); render(); initReminder();
+    state=n; disarm(); changed(); setMsg('اتسترجعت بياناتك ✅','good'); render(); initReminder(); syncAllReminders();
   });
 
   /* ---------- new day rollover ---------- */
   function checkRollover(){
     var t=todayKey();
-    if(t!==lastToday){ if(view===lastToday) view=t; lastToday=t; celebrated={}; if(!editing) render(); }
+    if(t!==lastToday){ if(view===lastToday) view=t; lastToday=t; celebrated={}; if(!editing) render(); syncAllReminders(); }
   }
   setInterval(checkRollover,60000);
   document.addEventListener('visibilitychange',function(){
     if(document.visibilityState!=='visible') return;
-    checkRollover(); checkReminder();
+    checkRollover(); syncAllReminders();
     if(docRef && !dirty && !saving && !editing){
       docRef.get().then(function(s){ if(s.exists && !dirty && !saving){ state=normalize(clone(s.data())); saveLocal(); render(); } }).catch(function(){});
     }
@@ -1096,12 +1269,7 @@ fieldset.field{border:0; margin:0; padding:0}
   state = loadLocal() || normalize(clone(DEFAULTS));
   initReminder();
   render();
-  checkReminder();
-
-  // Init Capacitor notifications if on native
-  initCapacitorNotifications().then(function(){
-    if(state.reminder.enabled) scheduleNativeReminder();
-  });
+  syncAllReminders();
 
   // Register Service Worker for PWA + background notifications
   if('serviceWorker' in navigator){
