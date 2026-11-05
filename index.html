@@ -36,6 +36,16 @@
   --track:#1D3639; --accent:#3FB5A8; --accent-ink:#04201D; --done:#E8B04A; --done-ink:#1E1503; --danger:#F2867F;
   --h1:#1F5A55; --h2:#2E8379; color-scheme:dark;
 }
+:root[data-theme="oled"]{
+  --bg:#000000; --surface:#0A0E10; --ink:#E3EEEC; --muted:#7E979A; --line:#172224;
+  --track:#141C1E; --accent:#3FB5A8; --accent-ink:#04201D; --done:#E8B04A; --done-ink:#1E1503; --danger:#F2867F;
+  --h1:#173E3B; --h2:#236159; color-scheme:dark;
+}
+:root[data-theme="light"]{
+  --bg:#E9F0EF; --surface:#F7FAF9; --ink:#0E2429; --muted:#52686B; --line:#CBD9D7;
+  --track:#D3E0DE; --accent:#0F6B63; --accent-ink:#FFFFFF; --done:#A8690A; --done-ink:#FFFFFF; --danger:#B3261E;
+  --h1:#9CCBC5; --h2:#4F9F96; color-scheme:light;
+}
 
 /* === BASE === */
 *{box-sizing:border-box}
@@ -229,6 +239,24 @@ fieldset.field{border:0; margin:0; padding:0}
 .pip-floating-btn{position:fixed; bottom:24px; left:20px; z-index:70; width:52px; height:52px; border-radius:50%; background:var(--accent); color:var(--accent-ink); border:2px solid var(--surface); box-shadow:0 4px 16px rgba(0,0,0,.25); display:grid; place-items:center; font-size:1.4rem; cursor:pointer; transition:transform .15s, box-shadow .15s}
 .pip-floating-btn:active{transform:scale(.92)}
 
+/* Voice mic */
+.mic-btn{width:40px; height:40px; border-radius:50%; border:1px solid var(--line); background:var(--bg); display:grid; place-items:center; cursor:pointer; font-size:1.15rem; transition:all .2s; flex-shrink:0}
+.mic-btn.mic-active{background:var(--danger); color:#fff; border-color:var(--danger); animation:pulseMic 1s infinite alternate}
+@keyframes pulseMic{from{box-shadow:0 0 0 0 rgba(242,134,127,.6)}to{box-shadow:0 0 0 10px rgba(242,134,127,0)}}
+
+/* Fullscreen Overlays (Tasbeeh & Pomodoro) */
+.fullscreen-overlay{position:fixed; inset:0; z-index:100; background:var(--bg); display:flex; flex-direction:column; padding:20px; box-sizing:border-box; user-select:none; -webkit-user-select:none; animation:fadeIn .2s ease}
+.tasbeeh-tap-zone{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; -webkit-tap-highlight-color:transparent; position:relative; min-height:220px}
+.tasbeeh-huge-num{font-family:var(--display); font-size:5.5rem; font-weight:700; line-height:1; color:var(--accent); transition:transform .08s ease}
+.tasbeeh-tap-zone:active .tasbeeh-huge-num{transform:scale(1.08)}
+
+/* Pomodoro timer */
+.pomo-circle{width:220px; height:220px; border-radius:50%; border:6px solid var(--track); display:flex; flex-direction:column; align-items:center; justify-content:center; margin:20px auto; position:relative}
+.pomo-num{font-family:var(--display); font-size:3.2rem; font-weight:700; line-height:1}
+
+/* Share modal */
+.share-preview-card{background:linear-gradient(145deg, var(--surface), var(--bg)); border:2px solid var(--accent); border-radius:22px; padding:22px; text-align:center; display:flex; flex-direction:column; gap:14px; box-shadow:0 8px 30px rgba(0,0,0,.18)}
+
 /* === RESPONSIVE === */
 @media(max-width:420px){
   .panel{grid-template-columns:1fr}
@@ -263,12 +291,15 @@ fieldset.field{border:0; margin:0; padding:0}
       <div class="herolinks">
         <button class="link" id="toToday" hidden>رجّعني لليوم</button>
         <button class="link" id="restBtn"></button>
+        <button class="link" id="freezeBtn"></button>
+        <button class="link" id="shareTodayBtn">📤 مشاركة إنجاز اليوم</button>
       </div>
       <div class="summary">
         <div class="summary-text"><span id="sumMain"></span><span id="sumSub"></span></div>
         <div class="segs" id="segs"></div>
       </div>
       <p class="restnote" id="restNote" hidden>اليوم ده إجازة. تقدر تسجّل فيه عادي، لكن مش بيتحسب في السلاسل ولا بيكسرها.</p>
+      <p class="restnote" id="freezeNote" hidden style="border-color:var(--accent); color:var(--accent);">🛡️ تم تجميد السلسلة لهذا اليوم لحماية تقدمك واستمراريتك.</p>
     </header>
 
     <div id="todayThoughtBanner" class="card" style="border:1.5px dashed var(--accent); background:var(--surface); cursor:pointer; padding:12px 14px; margin-bottom:4px;" hidden title="اضغط لفتح الخواطر">
@@ -338,6 +369,27 @@ fieldset.field{border:0; margin:0; padding:0}
     <div><h1 class="vh">المزيد</h1></div>
 
     <div class="settings-card">
+      <h3>🎨 مظهر التطبيق</h3>
+      <p class="sub">اختر المظهر المريح لعينك وجهازك.</p>
+      <div class="chips" id="themeChips">
+        <button class="chip-filter" data-theme-val="auto">⚙️ تلقائي</button>
+        <button class="chip-filter" data-theme-val="light">☀️ فاتح</button>
+        <button class="chip-filter" data-theme-val="dark">🌙 داكن</button>
+        <button class="chip-filter" data-theme-val="oled">🖤 أسود OLED</button>
+      </div>
+    </div>
+
+    <div class="settings-card">
+      <h3>🔊 المؤثرات الصوتية</h3>
+      <p class="sub">أصوات تحفيزية خفيفة عند التسبيح والإنجاز وإتمام المهام.</p>
+      <label class="switch">
+        <input type="checkbox" id="soundToggle" checked>
+        <span>تفعيل الأصوات</span>
+        <span class="toggle-track"></span>
+      </label>
+    </div>
+
+    <div class="settings-card">
       <h3>🔔 التذكيرات</h3>
       <p class="sub">هنفكّرك لو مخلّصتش مهامك.</p>
       <label class="switch">
@@ -387,8 +439,11 @@ fieldset.field{border:0; margin:0; padding:0}
       <button class="icon-btn" id="btnCloseThoughtModal" type="button" style="width:36px; height:36px; font-size:1rem;">✕</button>
     </div>
     <div class="field wide">
-      <label for="thoughtInputText">نص الخاطرة / الفكرة / الاقتباس</label>
-      <textarea id="thoughtInputText" rows="4" style="width:100%; border-radius:12px; border:1px solid var(--line); background:var(--bg); padding:12px; font-size:1.05rem; line-height:1.6; resize:vertical;" placeholder="اكتب هنا ما يدور في خاطرك..."></textarea>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+        <label for="thoughtInputText" style="font-size:.85rem; color:var(--muted);">نص الخاطرة / الفكرة / الاقتباس</label>
+        <button class="mic-btn" id="btnVoiceInput" type="button" title="تحدث بصوتك ليكتب تلقائياً">🎙️</button>
+      </div>
+      <textarea id="thoughtInputText" rows="4" style="width:100%; border-radius:12px; border:1px solid var(--line); background:var(--bg); padding:12px; font-size:1.05rem; line-height:1.6; resize:vertical;" placeholder="اكتب هنا أو اضغط 🎙️ للتحدث بصوتك..."></textarea>
     </div>
     <fieldset class="field wide"><legend>التصنيف</legend>
       <div class="chips" id="thoughtModalCats"></div>
@@ -402,6 +457,80 @@ fieldset.field{border:0; margin:0; padding:0}
     <div class="row" style="display:flex; gap:8px; margin-top:8px;">
       <button class="btn primary" id="btnSaveThought" type="button" style="flex:1;">حفظ الخاطرة</button>
       <button class="btn ghost" id="btnCancelThought" type="button">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- Tasbeeh Fullscreen Modal -->
+<div id="tasbeehModal" class="fullscreen-overlay" hidden>
+  <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+    <div>
+      <h2 id="tasbeehTaskName" style="margin:0; font-family:var(--display); font-size:1.4rem;"></h2>
+      <p id="tasbeehTaskTarget" style="margin:2px 0 0; color:var(--muted); font-size:.9rem;"></p>
+    </div>
+    <button class="icon-btn" id="btnCloseTasbeeh" type="button" style="width:44px; height:44px;">✕</button>
+  </div>
+  <div class="tasbeeh-tap-zone" id="tasbeehTapZone">
+    <div style="text-align:center;">
+      <span class="tasbeeh-huge-num num" id="tasbeehCurCount">0</span>
+      <p style="margin:12px 0 0; color:var(--muted); font-size:1.05rem;">المس أي مكان في الشاشة للعد 📿</p>
+    </div>
+  </div>
+  <div style="display:flex; gap:10px; justify-content:center; align-items:center; padding-top:14px; border-top:1px dashed var(--line);">
+    <button class="btn" id="btnTasbeehMinus" style="flex:1; min-height:48px;">➖ نقّص</button>
+    <button class="btn" id="btnTasbeehReset" style="flex:1; min-height:48px;">🔄 تصفير</button>
+    <button class="btn primary" id="btnTasbeehDone" style="flex:2; min-height:48px;">✅ تم وحفظ</button>
+  </div>
+</div>
+
+<!-- Pomodoro Focus Timer Modal -->
+<div id="pomodoroModal" class="fullscreen-overlay" hidden>
+  <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+    <div>
+      <h2 id="pomoTaskName" style="margin:0; font-family:var(--display); font-size:1.4rem;"></h2>
+      <p style="margin:2px 0 0; color:var(--muted); font-size:.9rem;">جلسة تركيز بومودورو ⏱️</p>
+    </div>
+    <button class="icon-btn" id="btnClosePomo" type="button" style="width:44px; height:44px;">✕</button>
+  </div>
+  <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+    <div class="chips" id="pomoPresets" style="margin-bottom:12px;">
+      <button class="chip-filter active" data-pomo-mins="25">25 دقيقة تركيز</button>
+      <button class="chip-filter" data-pomo-mins="15">15 دقيقة</button>
+      <button class="chip-filter" data-pomo-mins="5">5 دقائق راحة</button>
+    </div>
+    <div class="pomo-circle">
+      <span class="pomo-num num" id="pomoTimeDisplay">25:00</span>
+      <span id="pomoStatusText" style="font-size:.85rem; color:var(--muted); margin-top:4px;">جاهز للبدء</span>
+    </div>
+  </div>
+  <div style="display:flex; gap:10px; width:100%;">
+    <button class="btn primary" id="btnPomoStart" style="flex:2; min-height:50px; font-size:1.1rem;">▶️ ابدأ التركيز</button>
+    <button class="btn ghost" id="btnPomoReset" style="flex:1; min-height:50px;">🔄 إعادة</button>
+  </div>
+</div>
+
+<!-- Share Progress Modal -->
+<div id="shareModal" style="position:fixed; inset:0; z-index:96; background:rgba(0,0,0,.6); backdrop-filter:blur(4px); display:grid; place-items:center; padding:16px;" hidden>
+  <div class="card" style="width:100%; max-width:440px; border-color:var(--accent);">
+    <div class="head">
+      <h2 style="font-size:1.25rem;">📤 مشاركة الإنجاز</h2>
+      <button class="icon-btn" id="btnCloseShareModal" type="button" style="width:36px; height:36px;">✕</button>
+    </div>
+    <div id="shareCardContent" class="share-preview-card">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <b style="font-size:1.2rem; color:var(--accent); font-family:var(--display);">تارجت اليوم 🎯</b>
+        <span id="shareCardDate" style="font-size:.82rem; color:var(--muted);"></span>
+      </div>
+      <div style="margin:4px 0;">
+        <div style="font-size:2.5rem; font-weight:700; line-height:1; font-family:var(--display);" id="shareCardPct">100%</div>
+        <p style="margin:6px 0 0; font-size:.95rem; color:var(--muted);" id="shareCardSub"></p>
+      </div>
+      <div id="shareCardThought" style="background:var(--surface); border:1px dashed var(--line); border-radius:12px; padding:10px; font-size:.9rem; font-style:italic;" hidden></div>
+      <div style="font-size:.78rem; color:var(--muted); opacity:.8;">تطبيق تارجت اليوم • استمرارية وإنجاز</div>
+    </div>
+    <div class="row" style="display:flex; gap:8px; margin-top:12px;">
+      <button class="btn primary" id="btnShareNative" style="flex:1;">📤 مشاركة عبر التطبيقات</button>
+      <button class="btn ghost" id="btnCopyShareText">📋 نسخ النص</button>
     </div>
   </div>
 </div>
@@ -430,16 +559,18 @@ fieldset.field{border:0; margin:0; padding:0}
   var DEFAULTS = {v:3, tasks:[
     {id:'t1', name:'قراءة', icon:'📖', unit:'صفحة', target:4, step:1, days:ALL.slice(), remTime:''},
     {id:'t2', name:'ذكر الله', icon:'📿', unit:'مرة', target:1000, step:100, days:ALL.slice(), remTime:''}
-  ], logs:{}, rest:{}, badges:{}, reminder:{enabled:false, time:'21:00'}, remindedToday:{},
+  ], logs:{}, rest:{}, freezes:{}, badges:{}, reminder:{enabled:false, time:'21:00'}, remindedToday:{},
   thoughts:[
     {id:'th1', text:'لا تحزن على ما فات، فكل أمر المؤمن له خير.', cat:'✨ تأمل', pinned:true, created:new Date().toISOString()}
-  ], stickyThought:true};
+  ], stickyThought:true, theme:'auto', soundEnabled:true};
 
   var state = null, view = todayKey(), lastToday = view, tab = 'today';
   var editing = null, confirmDel = null, restoreArmed = false, restoreTimer = null;
   var docRef = null, saving = false, pending = false, timer = null, dirty = false, mode = 'local';
   var celebrated = {}, toastTimer = null, drag = null, lastReminder = '';
   var thoughtFilter = 'all', thoughtSearchQuery = '', editingThoughtId = null;
+  var audioCtx = null, speechRecognizer = null, isRecognizing = false;
+  var activeTasbeehTaskId = null, activePomoTaskId = null, pomoInterval = null, pomoSecsLeft = 25 * 60, pomoRunning = false;
 
   /* ---------- dates ---------- */
   function pad(n){ return String(n).padStart(2,'0'); }
@@ -481,6 +612,8 @@ fieldset.field{border:0; margin:0; padding:0}
     }
     var rest = {};
     if(s.rest && typeof s.rest==='object'){ Object.keys(s.rest).forEach(function(d){ if(s.rest[d]) rest[d]=true; }); }
+    var freezes = {};
+    if(s.freezes && typeof s.freezes==='object'){ Object.keys(s.freezes).forEach(function(d){ if(s.freezes[d]) freezes[d]=true; }); }
     var badges = {};
     if(s.badges && typeof s.badges==='object'){ Object.keys(s.badges).forEach(function(id){ if(s.badges[id]) badges[id]=s.badges[id]; }); }
     var reminder = {enabled:false, time:'21:00'};
@@ -506,7 +639,9 @@ fieldset.field{border:0; margin:0; padding:0}
       };
     });
     var stickyThought = s.stickyThought !== false;
-    return {v:3, tasks:tasks, logs:logs, rest:rest, badges:badges, reminder:reminder, remindedToday:remindedToday, thoughts:thoughts, stickyThought:stickyThought};
+    var theme = (s.theme === 'light' || s.theme === 'dark' || s.theme === 'oled') ? s.theme : 'auto';
+    var soundEnabled = s.soundEnabled !== false;
+    return {v:3, tasks:tasks, logs:logs, rest:rest, freezes:freezes, badges:badges, reminder:reminder, remindedToday:remindedToday, thoughts:thoughts, stickyThought:stickyThought, theme:theme, soundEnabled:soundEnabled};
   }
   function loadLocal(){
     try{ var raw=localStorage.getItem(LS_KEY); if(raw) return normalize(JSON.parse(raw)); }catch(e){}
@@ -521,8 +656,9 @@ fieldset.field{border:0; margin:0; padding:0}
     changed();
   }
   function isRest(day){ return !!state.rest[day]; }
+  function isFrozen(day){ return !!(state.freezes && state.freezes[day]); }
   function scheduled(t,day){ return t.days.indexOf(weekday(day))>=0; }
-  function active(t,day){ return scheduled(t,day) && !isRest(day); }
+  function active(t,day){ return scheduled(t,day) && !isRest(day) && !isFrozen(day); }
   function isDone(t,day){ return t.target>0 && getCount(t.id,day)>=t.target; }
   function firstDay(){
     var k=Object.keys(state.logs).sort(), t=todayKey();
@@ -714,6 +850,9 @@ fieldset.field{border:0; margin:0; padding:0}
     $('next').disabled = view>=todayKey();
     $('restBtn').textContent = rest ? 'إلغاء الإجازة' : 'علّم اليوم إجازة';
     $('restNote').hidden = !rest;
+    var frozen = isFrozen(view);
+    $('freezeBtn').textContent = frozen ? 'إلغاء تجميد السلسلة' : '🛡️ تجميد السلسلة';
+    $('freezeNote').hidden = !frozen;
     var acts=state.tasks.filter(function(t){ return scheduled(t,view); }), done=0, segs='';
     acts.forEach(function(t){
       var c=getCount(t.id,view), p=Math.min(100,c/t.target*100), full=isDone(t,view);
@@ -754,7 +893,11 @@ fieldset.field{border:0; margin:0; padding:0}
         '<button class="btn minus" data-act="dec" aria-label="نقّص">−</button>'+
         '<button class="btn primary" data-act="inc">+ <span class="num">'+fmt(t.step)+'</span></button>'+
       '</div>'+
-      '<div class="actions2"><button class="btn ghost" data-act="edit">✏️ تعديل</button></div>'+
+      '<div class="actions2">'+
+        '<button class="btn ghost" data-act="tasbeeh" title="فتح كعداد شاشة كاملة">📿 مسبحة</button>'+
+        '<button class="btn ghost" data-act="pomo" title="مؤقت تركيز">⏱️ تركيز</button>'+
+        '<button class="btn ghost" data-act="edit">✏️ تعديل</button>'+
+      '</div>'+
       '<div class="week"><span>آخر 7 أيام</span><span class="dots">'+dots+'</span></div>'+
     '</article>';
   }
@@ -1120,6 +1263,9 @@ fieldset.field{border:0; margin:0; padding:0}
     var p = (state.thoughts || []).find(function(x){ return x.pinned; });
     if(p) copyTextToClipboard(p.text);
   });
+  $('btnVoiceInput') && $('btnVoiceInput').addEventListener('click', function(){
+    toggleVoiceInput($('thoughtInputText'), this);
+  });
 
   $('thoughtSearch') && $('thoughtSearch').addEventListener('input', function(e){
     thoughtSearchQuery = e.target.value.trim();
@@ -1149,6 +1295,361 @@ fieldset.field{border:0; margin:0; padding:0}
     else if(act === 'del') deleteThought(id);
   });
 
+  /* ---------- sound effects (Web Audio API) ---------- */
+  function getAudioContext(){
+    if(!audioCtx){
+      var AudioContext = window.AudioContext || window.webkitAudioContext;
+      if(AudioContext) audioCtx = new AudioContext();
+    }
+    if(audioCtx && audioCtx.state === 'suspended'){
+      audioCtx.resume().catch(function(){});
+    }
+    return audioCtx;
+  }
+
+  function playSound(type){
+    if(state && state.soundEnabled === false) return;
+    try {
+      var ctx = getAudioContext();
+      if(!ctx) return;
+      var now = ctx.currentTime;
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      if(type === 'tap'){
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(440, now);
+        osc.frequency.exponentialRampToValueAtTime(880, now + 0.04);
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+        osc.start(now);
+        osc.stop(now + 0.05);
+      } else if(type === 'complete'){
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(523.25, now);
+        osc.frequency.setValueAtTime(659.25, now + 0.08);
+        osc.frequency.setValueAtTime(783.99, now + 0.16);
+        gain.gain.setValueAtTime(0.18, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+        osc.start(now);
+        osc.stop(now + 0.45);
+      } else if(type === 'pomo'){
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(587.33, now);
+        osc.frequency.exponentialRampToValueAtTime(880, now + 0.1);
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+        osc.start(now);
+        osc.stop(now + 0.8);
+      }
+    } catch(e){}
+  }
+
+  /* ---------- voice-to-text dictation ---------- */
+  function toggleVoiceInput(targetInput, btnEl){
+    var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if(!SpeechRecognition){
+      showToast('🎙️', 'غير مدعوم', 'خاصية الإملاء الصوتي غير مدعومة في متصفحك.');
+      return;
+    }
+    if(isRecognizing && speechRecognizer){
+      speechRecognizer.stop();
+      return;
+    }
+    try {
+      speechRecognizer = new SpeechRecognition();
+      speechRecognizer.lang = 'ar-EG';
+      speechRecognizer.interimResults = false;
+      speechRecognizer.maxAlternatives = 1;
+
+      speechRecognizer.onstart = function(){
+        isRecognizing = true;
+        if(btnEl) btnEl.classList.add('mic-active');
+        showToast('🎙️', 'جارٍ الاستماع...', 'تحدث الآن وسنقوم بكتابة الخاطرة');
+      };
+      speechRecognizer.onresult = function(event){
+        var transcript = event.results[0][0].transcript;
+        if(transcript && targetInput){
+          var cur = targetInput.value ? targetInput.value.trim() + ' ' : '';
+          targetInput.value = cur + transcript;
+        }
+      };
+      speechRecognizer.onerror = function(event){
+        console.log('Speech error:', event.error);
+        isRecognizing = false;
+        if(btnEl) btnEl.classList.remove('mic-active');
+      };
+      speechRecognizer.onend = function(){
+        isRecognizing = false;
+        if(btnEl) btnEl.classList.remove('mic-active');
+      };
+      speechRecognizer.start();
+    } catch(err){
+      console.log('Speech init error:', err);
+      isRecognizing = false;
+      if(btnEl) btnEl.classList.remove('mic-active');
+    }
+  }
+
+  /* ---------- themes ---------- */
+  function applyTheme(th){
+    var root = document.documentElement;
+    if(th === 'light' || th === 'oled'){
+      root.setAttribute('data-theme', th);
+    } else {
+      root.removeAttribute('data-theme');
+    }
+    var chips = $('themeChips');
+    if(chips){
+      chips.querySelectorAll('.chip-filter').forEach(function(b){
+        b.classList.toggle('active', b.getAttribute('data-theme-val') === th);
+      });
+    }
+  }
+
+  $('themeChips') && $('themeChips').addEventListener('click', function(e){
+    var btn = e.target.closest('[data-theme-val]');
+    if(!btn) return;
+    var th = btn.getAttribute('data-theme-val');
+    state.theme = th;
+    applyTheme(th);
+    changed();
+    showToast('🎨', 'تم تغيير المظهر', btn.textContent.trim());
+  });
+
+  $('soundToggle') && $('soundToggle').addEventListener('change', function(){
+    state.soundEnabled = this.checked;
+    changed();
+    if(state.soundEnabled) playSound('tap');
+    showToast('🔔', 'المؤثرات الصوتية', state.soundEnabled ? 'تم تفعيل الأصوات' : 'تم كتم الأصوات');
+  });
+
+  /* ---------- fullscreen tasbeeh counter ---------- */
+  function openTasbeeh(taskId){
+    activeTasbeehTaskId = taskId;
+    var t = findTask(taskId);
+    if(!t) return;
+    $('tasbeehTaskTitle').textContent = (t.icon ? t.icon + ' ' : '') + t.name;
+    updateTasbeehUI();
+    $('tasbeehModal').hidden = false;
+  }
+
+  function closeTasbeeh(){
+    $('tasbeehModal').hidden = true;
+    activeTasbeehTaskId = null;
+    render();
+    syncAllReminders();
+  }
+
+  function updateTasbeehUI(){
+    if(!activeTasbeehTaskId) return;
+    var t = findTask(activeTasbeehTaskId);
+    if(!t) return;
+    var c = getCount(t.id, view);
+    $('tasbeehNum').textContent = fmt(c);
+    var done = isDone(t, view);
+    var sub = done ? '✅ حققت التارجت اليومي! ما شاء الله' : ('الهدف: ' + fmt(t.target) + ' ' + (t.unit || ''));
+    $('tasbeehSub').textContent = sub;
+    $('tasbeehProgress').style.width = Math.min(100, (c / t.target) * 100) + '%';
+  }
+
+  function tasbeehIncrement(){
+    if(!activeTasbeehTaskId) return;
+    var t = findTask(activeTasbeehTaskId);
+    if(!t) return;
+    var wasDone = isDone(t, view);
+    setCount(t.id, view, getCount(t.id, view) + t.step);
+    updateTasbeehUI();
+    try {
+      if(navigator.vibrate){
+        if(!wasDone && isDone(t, view)) navigator.vibrate([50, 50, 100]);
+        else navigator.vibrate(12);
+      }
+    } catch(e){}
+    if(!wasDone && isDone(t, view)){
+      playSound('complete');
+      checkCelebration();
+    } else {
+      playSound('tap');
+    }
+  }
+
+  $('tasbeehTapZone') && $('tasbeehTapZone').addEventListener('click', tasbeehIncrement);
+  $('btnCloseTasbeeh') && $('btnCloseTasbeeh').addEventListener('click', closeTasbeeh);
+  $('tasbeehMinusBtn') && $('tasbeehMinusBtn').addEventListener('click', function(e){
+    e.stopPropagation();
+    if(!activeTasbeehTaskId) return;
+    var t = findTask(activeTasbeehTaskId);
+    if(!t) return;
+    setCount(t.id, view, getCount(t.id, view) - t.step);
+    updateTasbeehUI();
+    playSound('tap');
+  });
+  $('tasbeehResetBtn') && $('tasbeehResetBtn').addEventListener('click', function(e){
+    e.stopPropagation();
+    if(!activeTasbeehTaskId) return;
+    var t = findTask(activeTasbeehTaskId);
+    if(!t) return;
+    setCount(t.id, view, 0);
+    updateTasbeehUI();
+    playSound('tap');
+    showToast('🔄', 'تصفير العداد', 'تم تصفير عدد اليوم للمهمة');
+  });
+
+  /* ---------- pomodoro timer ---------- */
+  function openPomodoro(taskId){
+    activePomoTaskId = taskId;
+    var t = findTask(taskId);
+    if(!t) return;
+    $('pomoTaskTitle').textContent = (t.icon ? t.icon + ' ' : '') + t.name;
+    var stepVal = t.unit ? ('+ ' + fmt(t.step) + ' ' + t.unit) : ('+ ' + fmt(t.step));
+    $('pomoIncUnit').textContent = stepVal;
+    resetPomodoro(25);
+    $('pomodoroModal').hidden = false;
+  }
+
+  function closePomodoro(){
+    if(pomoInterval) clearInterval(pomoInterval);
+    pomoRunning = false;
+    $('pomodoroModal').hidden = true;
+    activePomoTaskId = null;
+    render();
+    syncAllReminders();
+  }
+
+  function fmtPomoTime(secs){
+    var m = Math.floor(secs / 60);
+    var s = secs % 60;
+    return pad(m) + ':' + pad(s);
+  }
+
+  function updatePomoDisplay(){
+    $('pomoTime').textContent = fmtPomoTime(pomoSecsLeft);
+  }
+
+  function resetPomodoro(mins){
+    if(pomoInterval) clearInterval(pomoInterval);
+    pomoRunning = false;
+    pomoSecsLeft = (mins || 25) * 60;
+    updatePomoDisplay();
+    $('pomoStartBtn').textContent = '▶️ بدء التركيز';
+    $('pomoStatus').textContent = 'مستعد للبدء';
+  }
+
+  function togglePomodoro(){
+    if(pomoRunning){
+      clearInterval(pomoInterval);
+      pomoRunning = false;
+      $('pomoStartBtn').textContent = '▶️ استئناف';
+      $('pomoStatus').textContent = 'موقوف مؤقتًا';
+    } else {
+      pomoRunning = true;
+      $('pomoStartBtn').textContent = '⏸️ إيقاف مؤقت';
+      $('pomoStatus').textContent = 'ركز في مهمتك الآن 🎯';
+      playSound('tap');
+      pomoInterval = setInterval(function(){
+        if(pomoSecsLeft > 0){
+          pomoSecsLeft--;
+          updatePomoDisplay();
+        } else {
+          clearInterval(pomoInterval);
+          pomoRunning = false;
+          $('pomoStartBtn').textContent = '▶️ بدء من جديد';
+          $('pomoStatus').textContent = '🎉 أحسنت! انتهت جلسة التركيز';
+          playSound('pomo');
+          try { if(navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 150]); } catch(e){}
+          if(activePomoTaskId){
+            var t = findTask(activePomoTaskId);
+            if(t){
+              setCount(t.id, view, getCount(t.id, view) + t.step);
+              showToast('⏱️', 'اكتملت الجلسة!', 'تمت إضافة ' + fmt(t.step) + ' ' + (t.unit || '') + ' إلى ' + t.name);
+            }
+          }
+        }
+      }, 1000);
+    }
+  }
+
+  $('btnClosePomodoro') && $('btnClosePomodoro').addEventListener('click', closePomodoro);
+  $('pomoStartBtn') && $('pomoStartBtn').addEventListener('click', togglePomodoro);
+  $('pomoResetBtn') && $('pomoResetBtn').addEventListener('click', function(){ resetPomodoro(25); });
+  $('pomodoroModal') && $('pomodoroModal').addEventListener('click', function(e){
+    var b = e.target.closest('[data-pomo-min]');
+    if(!b) return;
+    var mins = parseInt(b.getAttribute('data-pomo-min'), 10);
+    if(mins > 0) resetPomodoro(mins);
+  });
+
+  /* ---------- share progress card ---------- */
+  function getShareData(){
+    var today = todayKey();
+    var acts = state.tasks.filter(function(t){ return scheduled(t, today); });
+    var doneTasks = acts.filter(function(t){ return isDone(t, today); });
+    var totalTasks = acts.length;
+    var pct = totalTasks ? Math.round((doneTasks.length / totalTasks) * 100) : 0;
+    var pinned = getPinnedThought();
+
+    var title = '🎯 إنجازي اليوم في تارجت اليوم (' + pct + '%)';
+    var text = '🎯 إنجازي اليوم في تارجت اليوم:\n' +
+      '✅ أتممت ' + doneTasks.length + ' من أصل ' + totalTasks + ' مهام (' + pct + '%)\n';
+
+    acts.forEach(function(t){
+      var c = getCount(t.id, today);
+      var ok = isDone(t, today);
+      text += (ok ? '✅ ' : '⏳ ') + (t.icon ? t.icon + ' ' : '') + t.name + ': ' + fmt(c) + '/' + fmt(t.target) + ' ' + (t.unit || '') + '\n';
+    });
+
+    if(pinned && pinned.text){
+      text += '\n💭 خاطرة اليوم:\n"' + pinned.text + '"\n';
+    }
+    text += '\n#تارجت_اليوم #DailyTargets';
+
+    return { title: title, text: text, pct: pct, doneCount: doneTasks.length, totalCount: totalTasks, pinned: pinned };
+  }
+
+  function openShareModal(){
+    var data = getShareData();
+    var cardHtml = '<div style="font-size:2.4rem; font-weight:700; color:var(--accent); font-family:var(--display);">' + data.pct + '%</div>' +
+      '<div style="font-size:1.15rem; font-weight:600;">أتممت ' + data.doneCount + ' من ' + data.totalCount + ' مهام اليوم</div>';
+    if(data.pinned && data.pinned.text){
+      cardHtml += '<div style="font-size:.9rem; color:var(--muted); font-style:italic; border-top:1px dashed var(--line); padding-top:10px;">"' + esc(data.pinned.text) + '"</div>';
+    }
+    $('sharePreviewCard').innerHTML = cardHtml;
+    $('shareModal').hidden = false;
+  }
+
+  function closeShareModal(){
+    $('shareModal').hidden = true;
+  }
+
+  function shareProgressNow(){
+    var data = getShareData();
+    if(navigator.share){
+      navigator.share({
+        title: data.title,
+        text: data.text
+      }).then(function(){
+        showToast('📤', 'تمت المشاركة', 'تمت مشاركة بطاقة إنجازك بنجاح');
+        closeShareModal();
+      }).catch(function(){});
+    } else {
+      copyTextToClipboard(data.text);
+      showToast('📋', 'تم النسخ', 'تم نسخ بطاقة الإنجاز، يمكنك لصقها ومشاركتها في أي مكان!');
+      closeShareModal();
+    }
+  }
+
+  $('shareTodayBtn') && $('shareTodayBtn').addEventListener('click', openShareModal);
+  $('btnCloseShareModal') && $('btnCloseShareModal').addEventListener('click', closeShareModal);
+  $('btnShareNative') && $('btnShareNative').addEventListener('click', shareProgressNow);
+  $('btnCopyShareText') && $('btnCopyShareText').addEventListener('click', function(){
+    var data = getShareData();
+    copyTextToClipboard(data.text);
+    closeShareModal();
+  });
+
   /* ---------- tabs / render ---------- */
   function render(){
     ['today','thoughts','stats','backup'].forEach(function(n){
@@ -1176,6 +1677,11 @@ fieldset.field{border:0; margin:0; padding:0}
       var wasDone = isDone(t,view);
       setCount(id,view,getCount(id,view)+t.step);
       render();
+      if(!wasDone && isDone(t,view)){
+        playSound('complete');
+      } else {
+        playSound('tap');
+      }
       // bump animation
       var newCard=$('list').querySelector('[data-id="'+id+'"]');
       if(newCard){
@@ -1194,7 +1700,9 @@ fieldset.field{border:0; margin:0; padding:0}
       checkBadges();
       syncAllReminders();
     }
-    else if(act==='dec'&&t){ setCount(id,view,getCount(id,view)-t.step); render(); syncAllReminders(); }
+    else if(act==='dec'&&t){ setCount(id,view,getCount(id,view)-t.step); playSound('tap'); render(); syncAllReminders(); }
+    else if(act==='tasbeeh'&&t){ openTasbeeh(id); }
+    else if(act==='pomo'&&t){ openPomodoro(id); }
     else if(act==='edit'){ editing=id; confirmDel=null; renderList(); }
     else if(act==='cancel'){ editing=null; confirmDel=null; renderList(); }
     else if(act==='del'&&t){
@@ -1249,6 +1757,17 @@ fieldset.field{border:0; margin:0; padding:0}
   $('toToday').addEventListener('click',function(){ view=todayKey(); editing=null; render(); });
   $('restBtn').addEventListener('click',function(){
     if(isRest(view)) delete state.rest[view]; else state.rest[view]=true;
+    changed(); render();
+  });
+  $('freezeBtn') && $('freezeBtn').addEventListener('click',function(){
+    if(!state.freezes) state.freezes={};
+    if(isFrozen(view)){
+      delete state.freezes[view];
+      showToast('🛡️', 'إلغاء التجميد', 'تم إلغاء تجميد السلسلة لهذا اليوم');
+    } else {
+      state.freezes[view]=true;
+      showToast('🛡️', 'تم تجميد السلسلة', 'سلسلتك محمية ولن تنكسر إذا فاتك هذا اليوم');
+    }
     changed(); render();
   });
 
@@ -1637,7 +2156,7 @@ fieldset.field{border:0; margin:0; padding:0}
   function setMsg(text,kind){ var m=$('bkMsg'); m.textContent=text; m.className='msg'+(kind?' '+kind:''); }
   function disarm(){ restoreArmed=false; clearTimeout(restoreTimer); $('bkRestore').textContent='استرجاع من النص'; }
   $('bkCopy').addEventListener('click',function(){
-    var out={app:'daily-targets', v:3, exportedAt:new Date().toISOString(), tasks:state.tasks, logs:state.logs, rest:state.rest, badges:state.badges, reminder:state.reminder, thoughts:state.thoughts, stickyThought:state.stickyThought};
+    var out={app:'daily-targets', v:3, exportedAt:new Date().toISOString(), tasks:state.tasks, logs:state.logs, rest:state.rest, freezes:state.freezes, badges:state.badges, reminder:state.reminder, thoughts:state.thoughts, stickyThought:state.stickyThought, theme:state.theme, soundEnabled:state.soundEnabled};
     var text=JSON.stringify(out), ta=$('bkText');
     ta.value=text; ta.focus(); ta.select();
     var fallback=function(){
@@ -1681,6 +2200,8 @@ fieldset.field{border:0; margin:0; padding:0}
 
   /* ---------- start ---------- */
   state = loadLocal() || normalize(clone(DEFAULTS));
+  applyTheme(state.theme);
+  if($('soundToggle')) $('soundToggle').checked = (state.soundEnabled !== false);
   initReminder();
   render();
   syncAllReminders();

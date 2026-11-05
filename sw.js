@@ -1,4 +1,4 @@
-var CACHE_NAME = 'daily-v1';
+var CACHE_NAME = 'daily-v2';
 var ASSETS = ['./index.html', './manifest.json'];
 
 // Install — cache the app shell
