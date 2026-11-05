@@ -215,6 +215,20 @@ fieldset.field{border:0; margin:0; padding:0}
 .bump-anim .cur{animation:bump .3s ease}
 .done-anim{animation:glow .8s ease}
 
+/* === THOUGHTS NOTEBOOK === */
+.chip-filter{min-height:36px; padding:0 14px; border-radius:18px; border:1px solid var(--line); background:var(--surface); color:var(--muted); font-size:.85rem; font-weight:500; cursor:pointer; transition:all .15s; white-space:nowrap}
+.chip-filter.active{background:var(--accent); color:var(--accent-ink); border-color:var(--accent); font-weight:600}
+.thought-card{background:var(--surface); border:1px solid var(--line); border-radius:18px; padding:16px; display:flex; flex-direction:column; gap:10px; position:relative; transition:box-shadow .2s, border-color .2s}
+.thought-card.is-pinned{border-color:var(--accent); box-shadow:0 3px 12px rgba(15,107,99,.12)}
+.thought-text{font-size:1.05rem; line-height:1.65; margin:0; white-space:pre-wrap; word-break:break-word}
+.thought-meta{display:flex; justify-content:space-between; align-items:center; font-size:.82rem; color:var(--muted); border-top:1px dashed var(--line); padding-top:10px; margin-top:2px; flex-wrap:wrap; gap:8px}
+.thought-actions{display:flex; gap:6px; align-items:center}
+.thought-actions button{border:1px solid var(--line); background:var(--bg); cursor:pointer; padding:4px 10px; border-radius:10px; font-size:.82rem; color:var(--muted); font-weight:500; transition:all .15s}
+.thought-actions button:hover{background:var(--surface); color:var(--ink); border-color:var(--accent)}
+.thought-actions button.pinned-btn{color:var(--accent); border-color:var(--accent); font-weight:600}
+.pip-floating-btn{position:fixed; bottom:24px; left:20px; z-index:70; width:52px; height:52px; border-radius:50%; background:var(--accent); color:var(--accent-ink); border:2px solid var(--surface); box-shadow:0 4px 16px rgba(0,0,0,.25); display:grid; place-items:center; font-size:1.4rem; cursor:pointer; transition:transform .15s, box-shadow .15s}
+.pip-floating-btn:active{transform:scale(.92)}
+
 /* === RESPONSIVE === */
 @media(max-width:420px){
   .panel{grid-template-columns:1fr}
@@ -232,6 +246,7 @@ fieldset.field{border:0; margin:0; padding:0}
 <main lang="ar" dir="rtl">
   <nav class="tabs" role="tablist" aria-label="الأقسام">
     <button role="tab" data-tab="today" id="tab-today">اليوم</button>
+    <button role="tab" data-tab="thoughts" id="tab-thoughts">خواطر 💭</button>
     <button role="tab" data-tab="stats" id="tab-stats">إحصائيات</button>
     <button role="tab" data-tab="backup" id="tab-backup">المزيد</button>
   </nav>
@@ -255,8 +270,59 @@ fieldset.field{border:0; margin:0; padding:0}
       </div>
       <p class="restnote" id="restNote" hidden>اليوم ده إجازة. تقدر تسجّل فيه عادي، لكن مش بيتحسب في السلاسل ولا بيكسرها.</p>
     </header>
+
+    <div id="todayThoughtBanner" class="card" style="border:1.5px dashed var(--accent); background:var(--surface); cursor:pointer; padding:12px 14px; margin-bottom:4px;" hidden title="اضغط لفتح الخواطر">
+      <div style="display:flex; justify-content:space-between; align-items:center; font-size:.85rem; color:var(--accent); font-weight:600; margin-bottom:2px;">
+        <span>💭 خاطرة اليوم</span>
+        <span id="todayThoughtCat" style="font-size:.78rem; color:var(--muted); font-weight:normal;"></span>
+      </div>
+      <p id="todayThoughtText" style="margin:0; font-size:.95rem; line-height:1.5; font-style:italic; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;"></p>
+    </div>
+
     <section class="list" id="list" aria-label="مهام اليوم"></section>
     <button class="add" id="add">+ مهمة جديدة</button>
+  </div>
+
+  <div class="view" id="thoughtsView" hidden>
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+      <div><h1 class="vh">خواطر</h1><p class="sub">مذكرتك للأفكار، التأملات، والاقتباسات</p></div>
+      <button class="btn ghost" id="btnPip" style="min-height:40px; padding:0 12px; font-size:.85rem; display:inline-flex; align-items:center; gap:6px;" title="نافذة عائمة فوق التطبيقات">
+        <span>🪟 نافذة عائمة</span>
+      </button>
+    </div>
+
+    <!-- Pinned thought hero -->
+    <div id="pinnedThoughtHero" class="card" style="border:1.5px solid var(--accent); background:linear-gradient(135deg, var(--surface), var(--bg));" hidden>
+      <div class="head">
+        <h2 style="font-size:1.1rem; color:var(--accent);">📌 خاطرة اليوم (المثبتة)</h2>
+        <span class="streak" id="pinnedHeroCat"></span>
+      </div>
+      <p id="pinnedHeroText" style="margin:0; font-size:1.15rem; font-weight:500; line-height:1.65; font-style:italic; white-space:pre-wrap;"></p>
+      <div style="display:flex; justify-content:space-between; align-items:center; font-size:.82rem; color:var(--muted); margin-top:4px;">
+        <span id="pinnedHeroDate"></span>
+        <button class="link" id="btnCopyPinned" style="padding:0; font-size:.85rem;">📋 نسخ</button>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div style="display:flex; gap:8px; align-items:center;">
+      <input type="text" id="thoughtSearch" placeholder="🔍 بحث في خواطرك..." style="flex:1; min-height:46px; border-radius:12px; border:1px solid var(--line); background:var(--surface); padding:0 12px; font-size:.95rem;">
+      <button class="btn primary" id="btnAddThought" style="flex-shrink:0; min-height:46px; padding:0 16px; font-size:1rem;">+ خاطرة جديدة</button>
+    </div>
+
+    <!-- Filter chips -->
+    <div class="chips" id="thoughtFilterChips" style="overflow-x:auto; padding-bottom:4px; flex-wrap:nowrap;">
+      <button class="chip-filter active" data-cat="all">الكل</button>
+      <button class="chip-filter" data-cat="pinned">📌 مثبتة</button>
+      <button class="chip-filter" data-cat="💭 فكرة">💭 فكرة</button>
+      <button class="chip-filter" data-cat="✨ تأمل">✨ تأمل</button>
+      <button class="chip-filter" data-cat="📖 اقتباس">📖 اقتباس</button>
+      <button class="chip-filter" data-cat="💡 حكمة">💡 حكمة</button>
+      <button class="chip-filter" data-cat="❤️ شخصي">❤️ شخصي</button>
+      <button class="chip-filter" data-cat="🌙 دعاء وشكر">🌙 دعاء</button>
+    </div>
+
+    <section class="list" id="thoughtsList"></section>
   </div>
 
   <div class="view" id="statsView" hidden>
@@ -310,6 +376,36 @@ fieldset.field{border:0; margin:0; padding:0}
   </div>
 </div>
 
+<!-- Quick floating thought button -->
+<button class="pip-floating-btn" id="btnQuickFloatingThought" aria-label="تدوين خاطرة سريعة" title="تدوين خاطرة سريعة">✍️</button>
+
+<!-- Modal for adding/editing a thought -->
+<div id="thoughtModal" style="position:fixed; inset:0; z-index:95; background:rgba(0,0,0,.6); backdrop-filter:blur(4px); display:grid; place-items:center; padding:16px;" hidden>
+  <div class="card" style="width:100%; max-width:480px; max-height:92vh; overflow-y:auto; border-color:var(--accent);">
+    <div class="head">
+      <h2 id="thoughtModalTitle" style="font-size:1.25rem;">✍️ خاطرة جديدة</h2>
+      <button class="icon-btn" id="btnCloseThoughtModal" type="button" style="width:36px; height:36px; font-size:1rem;">✕</button>
+    </div>
+    <div class="field wide">
+      <label for="thoughtInputText">نص الخاطرة / الفكرة / الاقتباس</label>
+      <textarea id="thoughtInputText" rows="4" style="width:100%; border-radius:12px; border:1px solid var(--line); background:var(--bg); padding:12px; font-size:1.05rem; line-height:1.6; resize:vertical;" placeholder="اكتب هنا ما يدور في خاطرك..."></textarea>
+    </div>
+    <fieldset class="field wide"><legend>التصنيف</legend>
+      <div class="chips" id="thoughtModalCats"></div>
+    </fieldset>
+    <label class="switch" style="margin-top:6px;">
+      <input type="checkbox" id="thoughtPinCheck">
+      <span>📌 تثبيت في شاشة القفل والإشعار الدائم</span>
+      <span class="toggle-track"></span>
+    </label>
+    <p class="err" id="thoughtErr" hidden></p>
+    <div class="row" style="display:flex; gap:8px; margin-top:8px;">
+      <button class="btn primary" id="btnSaveThought" type="button" style="flex:1;">حفظ الخاطرة</button>
+      <button class="btn ghost" id="btnCancelThought" type="button">إلغاء</button>
+    </div>
+  </div>
+</div>
+
 <script>
 (function(){
   var $ = function(id){ return document.getElementById(id); };
@@ -330,15 +426,20 @@ fieldset.field{border:0; margin:0; padding:0}
     {id:'t10k', icon:'🌟', name:'عشر آلاف!', desc:'وصلت 10,000 في مهمة'},
     {id:'t5', icon:'📋', name:'متعدد المهام', desc:'عندك 5 مهام أو أكتر'}
   ];
+  var THOUGHT_CATS = ['💭 فكرة', '✨ تأمل', '📖 اقتباس', '💡 حكمة', '❤️ شخصي', '🌙 دعاء وشكر'];
   var DEFAULTS = {v:3, tasks:[
     {id:'t1', name:'قراءة', icon:'📖', unit:'صفحة', target:4, step:1, days:ALL.slice(), remTime:''},
     {id:'t2', name:'ذكر الله', icon:'📿', unit:'مرة', target:1000, step:100, days:ALL.slice(), remTime:''}
-  ], logs:{}, rest:{}, badges:{}, reminder:{enabled:false, time:'21:00'}, remindedToday:{}};
+  ], logs:{}, rest:{}, badges:{}, reminder:{enabled:false, time:'21:00'}, remindedToday:{},
+  thoughts:[
+    {id:'th1', text:'لا تحزن على ما فات، فكل أمر المؤمن له خير.', cat:'✨ تأمل', pinned:true, created:new Date().toISOString()}
+  ], stickyThought:true};
 
   var state = null, view = todayKey(), lastToday = view, tab = 'today';
   var editing = null, confirmDel = null, restoreArmed = false, restoreTimer = null;
   var docRef = null, saving = false, pending = false, timer = null, dirty = false, mode = 'local';
   var celebrated = {}, toastTimer = null, drag = null, lastReminder = '';
+  var thoughtFilter = 'all', thoughtSearchQuery = '', editingThoughtId = null;
 
   /* ---------- dates ---------- */
   function pad(n){ return String(n).padStart(2,'0'); }
@@ -393,7 +494,19 @@ fieldset.field{border:0; margin:0; padding:0}
         if(typeof s.remindedToday[k]==='string') remindedToday[k] = s.remindedToday[k];
       });
     }
-    return {v:3, tasks:tasks, logs:logs, rest:rest, badges:badges, reminder:reminder, remindedToday:remindedToday};
+    var thoughts = (Array.isArray(s.thoughts)?s.thoughts:[]).filter(function(th){
+      return th && typeof th.id==='string' && typeof th.text==='string' && th.text.trim();
+    }).map(function(th){
+      return {
+        id: th.id,
+        text: String(th.text).trim(),
+        cat: typeof th.cat==='string'&&th.cat ? th.cat : '💭 فكرة',
+        pinned: !!th.pinned,
+        created: typeof th.created==='string' ? th.created : new Date().toISOString()
+      };
+    });
+    var stickyThought = s.stickyThought !== false;
+    return {v:3, tasks:tasks, logs:logs, rest:rest, badges:badges, reminder:reminder, remindedToday:remindedToday, thoughts:thoughts, stickyThought:stickyThought};
   }
   function loadLocal(){
     try{ var raw=localStorage.getItem(LS_KEY); if(raw) return normalize(JSON.parse(raw)); }catch(e){}
@@ -738,13 +851,314 @@ fieldset.field{border:0; margin:0; padding:0}
     }).join('') || '<p class="sub">مفيش مهام لسه.</p>';
   }
 
+  /* ---------- thoughts notebook ---------- */
+  function fmtThoughtDate(iso){
+    try {
+      var d = new Date(iso);
+      var now = new Date();
+      var isToday = (d.toDateString() === now.toDateString());
+      var timeStr = new Intl.DateTimeFormat('ar-EG-u-nu-latn', { hour: 'numeric', minute: 'numeric', hour12: true }).format(d);
+      if(isToday) return 'اليوم ' + timeStr;
+      return new Intl.DateTimeFormat('ar-EG-u-nu-latn', { day: 'numeric', month: 'short' }).format(d) + ' ' + timeStr;
+    } catch(e){ return ''; }
+  }
+
+  function getPinnedThought(){
+    var list = state.thoughts || [];
+    return list.find(function(th){ return th.pinned; }) || (list.length ? list[0] : null);
+  }
+
+  function renderTodayThoughtBanner(){
+    var banner = $('todayThoughtBanner');
+    if(!banner) return;
+    var pinned = getPinnedThought();
+    if(pinned && state.thoughts.length > 0){
+      $('todayThoughtCat').textContent = pinned.cat || '💭 خاطرة';
+      $('todayThoughtText').textContent = pinned.text;
+      banner.hidden = false;
+    } else {
+      banner.hidden = true;
+    }
+  }
+
+  $('todayThoughtBanner') && $('todayThoughtBanner').addEventListener('click', function(){
+    tab = 'thoughts';
+    render();
+  });
+
+  function renderThoughts(){
+    var hero = $('pinnedThoughtHero');
+    var pinned = (state.thoughts || []).find(function(th){ return th.pinned; });
+    if(pinned){
+      $('pinnedHeroCat').textContent = pinned.cat;
+      $('pinnedHeroText').textContent = pinned.text;
+      $('pinnedHeroDate').textContent = fmtThoughtDate(pinned.created);
+      hero.hidden = false;
+    } else {
+      hero.hidden = true;
+    }
+
+    var list = (state.thoughts || []).slice();
+    if(thoughtFilter === 'pinned'){
+      list = list.filter(function(th){ return th.pinned; });
+    } else if(thoughtFilter !== 'all'){
+      list = list.filter(function(th){ return th.cat === thoughtFilter; });
+    }
+
+    if(thoughtSearchQuery){
+      var q = thoughtSearchQuery.toLowerCase();
+      list = list.filter(function(th){ return th.text.toLowerCase().indexOf(q) >= 0 || (th.cat && th.cat.toLowerCase().indexOf(q) >= 0); });
+    }
+
+    var listEl = $('thoughtsList');
+    if(!list.length){
+      listEl.innerHTML = '<div class="card" style="text-align:center; padding:32px 16px; color:var(--muted);"><p style="font-size:1.1rem; margin:0;">مفيش خواطر هنا لسه 💭</p><p style="font-size:.9rem; margin:6px 0 0;">اضغط على "+ خاطرة جديدة" ودوّن أول تأمل أو فكرة تخطر ببالك.</p></div>';
+      return;
+    }
+
+    listEl.innerHTML = list.map(function(th){
+      return '<article class="thought-card'+(th.pinned?' is-pinned':'')+'" data-th-id="'+th.id+'">'+
+        '<p class="thought-text">'+esc(th.text)+'</p>'+
+        '<div class="thought-meta">'+
+          '<span>'+esc(th.cat)+' • '+fmtThoughtDate(th.created)+'</span>'+
+          '<div class="thought-actions">'+
+            '<button data-th-act="pin" class="'+(th.pinned?'pinned-btn':'')+'" title="تثبيت">'+(th.pinned?'📌 مثبتة':'📌 تثبيت')+'</button>'+
+            '<button data-th-act="copy" title="نسخ الخاطرة">📋 نسخ</button>'+
+            '<button data-th-act="edit" title="تعديل">✏️ تعديل</button>'+
+            '<button data-th-act="del" style="color:var(--danger);" title="حذف">🗑️</button>'+
+          '</div>'+
+        '</div>'+
+      '</article>';
+    }).join('');
+  }
+
+  function openThoughtModal(id){
+    editingThoughtId = id || null;
+    var isEdit = !!id;
+    var th = isEdit ? (state.thoughts || []).find(function(x){ return x.id === id; }) : null;
+    $('thoughtModalTitle').textContent = isEdit ? '✏️ تعديل الخاطرة' : '✍️ خاطرة جديدة';
+    $('thoughtInputText').value = th ? th.text : '';
+    $('thoughtPinCheck').checked = th ? th.pinned : (state.thoughts.length === 0);
+    $('thoughtErr').hidden = true;
+
+    var curCat = th ? th.cat : THOUGHT_CATS[0];
+    $('thoughtModalCats').innerHTML = THOUGHT_CATS.map(function(cat){
+      return '<label class="chip"><input type="radio" name="modal-th-cat" value="'+esc(cat)+'"'+(cat===curCat?' checked':'')+'><span>'+esc(cat)+'</span></label>';
+    }).join('');
+
+    $('thoughtModal').hidden = false;
+    setTimeout(function(){ $('thoughtInputText').focus(); }, 100);
+  }
+
+  function closeThoughtModal(){
+    $('thoughtModal').hidden = true;
+    editingThoughtId = null;
+  }
+
+  function saveThought(){
+    var text = ($('thoughtInputText').value || '').trim();
+    if(!text){
+      $('thoughtErr').textContent = 'اكتب نص الخاطرة الأول.';
+      $('thoughtErr').hidden = false;
+      return;
+    }
+    var selCat = document.querySelector('input[name="modal-th-cat"]:checked');
+    var cat = selCat ? selCat.value : THOUGHT_CATS[0];
+    var pinned = $('thoughtPinCheck').checked;
+
+    if(!state.thoughts) state.thoughts = [];
+
+    if(pinned){
+      // Unpin others so only one main pinned thought exists
+      state.thoughts.forEach(function(x){ x.pinned = false; });
+    }
+
+    if(editingThoughtId){
+      var th = state.thoughts.find(function(x){ return x.id === editingThoughtId; });
+      if(th){
+        th.text = text;
+        th.cat = cat;
+        th.pinned = pinned;
+      }
+    } else {
+      var newId = 'th_' + Date.now().toString(36);
+      state.thoughts.unshift({
+        id: newId,
+        text: text,
+        cat: cat,
+        pinned: pinned,
+        created: new Date().toISOString()
+      });
+    }
+
+    closeThoughtModal();
+    changed();
+    render();
+    updateStickyThoughtNotification();
+    showToast('✨', 'تم الحفظ', 'تم حفظ الخاطرة بنجاح');
+  }
+
+  function togglePinThought(id){
+    if(!state.thoughts) return;
+    var th = state.thoughts.find(function(x){ return x.id === id; });
+    if(!th) return;
+    var targetPin = !th.pinned;
+    if(targetPin){
+      state.thoughts.forEach(function(x){ x.pinned = false; });
+      th.pinned = true;
+      showToast('📌', 'تم التثبيت', 'تم تعيينها كخاطرة اليوم المثبتة');
+    } else {
+      th.pinned = false;
+      showToast('📌', 'إلغاء التثبيت', 'تم إلغاء تثبيت الخاطرة');
+    }
+    changed();
+    render();
+    updateStickyThoughtNotification();
+  }
+
+  function deleteThought(id){
+    if(!state.thoughts) return;
+    state.thoughts = state.thoughts.filter(function(x){ return x.id !== id; });
+    changed();
+    render();
+    updateStickyThoughtNotification();
+    showToast('🗑️', 'تم الحذف', 'تم حذف الخاطرة');
+  }
+
+  function copyTextToClipboard(text){
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(function(){
+        showToast('📋', 'تم النسخ', 'تم نسخ نص الخاطرة للحافظة');
+      }).catch(function(){});
+    } else {
+      var ta = document.createElement('textarea');
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); showToast('📋', 'تم النسخ', 'تم نسخ نص الخاطرة'); } catch(e){}
+      ta.remove();
+    }
+  }
+
+  function updateStickyThoughtNotification(){
+    var pinned = (state.thoughts || []).find(function(th){ return th.pinned; });
+    if(!pinned && state.thoughts && state.thoughts.length > 0){
+      pinned = state.thoughts[0];
+    }
+    if(!pinned){
+      if(isNativeApp()){
+        var cap = getCapLocalNotifications();
+        if(cap) cap.cancel({ notifications: [{ id: 7777 }] }).catch(function(){});
+      }
+      return;
+    }
+
+    if(isNativeApp()){
+      var cap = getCapLocalNotifications();
+      if(cap && cap.schedule){
+        ensureNotificationChannel();
+        cap.schedule({
+          notifications: [{
+            id: 7777,
+            title: '📌 ' + pinned.cat + ' (خاطرة مثبتة)',
+            body: pinned.text,
+            channelId: 'daily-targets-channel-v2',
+            ongoing: true,
+            autoCancel: false,
+            sound: null,
+            iconColor: '#0F6B63',
+            extra: { type: 'thought', thoughtId: pinned.id }
+          }]
+        }).catch(function(){});
+      }
+    } else if(swReg && swReg.showNotification){
+      swReg.showNotification('📌 ' + pinned.cat + ' (خاطرة مثبتة)', {
+        body: pinned.text,
+        tag: 'daily-thought-sticky',
+        renotify: false,
+        silent: true,
+        requireInteraction: true,
+        icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">💭</text></svg>'
+      }).catch(function(){});
+    }
+  }
+
+  function enterFloatingMode(){
+    if(window.AndroidPip && typeof window.AndroidPip.enterPip === 'function'){
+      try {
+        window.AndroidPip.enterPip();
+        showToast('🪟', 'نافذة عائمة', 'التطبيق يعمل الآن فوق التطبيقات الأخرى');
+        return;
+      } catch(e){}
+    }
+    if('documentPictureInPicture' in window && window.documentPictureInPicture.requestWindow){
+      var pinned = getPinnedThought();
+      var thoughtText = pinned ? pinned.text : 'دوّن خواطرك وأهدافك اليومية!';
+      var thoughtCat = pinned ? pinned.cat : '💭 خاطرة';
+
+      window.documentPictureInPicture.requestWindow({ width: 340, height: 260 }).then(function(pipWin){
+        pipWin.document.body.dir = 'rtl';
+        pipWin.document.body.style.cssText = 'margin:0; padding:16px; background:#0B191C; color:#E3EEEC; font-family:system-ui,sans-serif; display:flex; flex-direction:column; justify-content:space-between; height:100%; box-sizing:border-box;';
+        pipWin.document.body.innerHTML = 
+          '<div style="font-size:12px; color:#3FB5A8; font-weight:600; margin-bottom:8px;">📌 ' + esc(thoughtCat) + '</div>' +
+          '<div style="font-size:15px; font-weight:500; line-height:1.6; flex:1; overflow-y:auto; white-space:pre-wrap;">' + esc(thoughtText) + '</div>' +
+          '<div style="margin-top:12px; font-size:11px; color:#8FA9AC; border-top:1px dashed #22393D; padding-top:6px;">تارجت اليوم 🎯 • نافذة عائمة</div>';
+      }).catch(function(){
+        showToast('🪟', 'النافذة العائمة', 'على الموبايل (APK) تعمل كنافذة عائمة فوق التطبيقات');
+      });
+      return;
+    }
+    showToast('🪟', 'النافذة العائمة', 'على الموبايل (APK) تعمل كنافذة عائمة فوق التطبيقات');
+  }
+
+  // Event bindings for thoughts
+  $('btnAddThought') && $('btnAddThought').addEventListener('click', function(){ openThoughtModal(); });
+  $('btnQuickFloatingThought') && $('btnQuickFloatingThought').addEventListener('click', function(){ openThoughtModal(); });
+  $('btnPip') && $('btnPip').addEventListener('click', enterFloatingMode);
+  $('btnCloseThoughtModal') && $('btnCloseThoughtModal').addEventListener('click', closeThoughtModal);
+  $('btnCancelThought') && $('btnCancelThought').addEventListener('click', closeThoughtModal);
+  $('btnSaveThought') && $('btnSaveThought').addEventListener('click', saveThought);
+  $('btnCopyPinned') && $('btnCopyPinned').addEventListener('click', function(){
+    var p = (state.thoughts || []).find(function(x){ return x.pinned; });
+    if(p) copyTextToClipboard(p.text);
+  });
+
+  $('thoughtSearch') && $('thoughtSearch').addEventListener('input', function(e){
+    thoughtSearchQuery = e.target.value.trim();
+    renderThoughts();
+  });
+
+  $('thoughtFilterChips') && $('thoughtFilterChips').addEventListener('click', function(e){
+    var btn = e.target.closest('[data-cat]');
+    if(!btn) return;
+    $('thoughtFilterChips').querySelectorAll('.chip-filter').forEach(function(b){ b.classList.remove('active'); });
+    btn.classList.add('active');
+    thoughtFilter = btn.getAttribute('data-cat');
+    renderThoughts();
+  });
+
+  $('thoughtsList') && $('thoughtsList').addEventListener('click', function(e){
+    var actBtn = e.target.closest('[data-th-act]');
+    if(!actBtn) return;
+    var card = actBtn.closest('[data-th-id]');
+    var id = card && card.getAttribute('data-th-id');
+    if(!id) return;
+    var act = actBtn.getAttribute('data-th-act');
+    var th = (state.thoughts || []).find(function(x){ return x.id === id; });
+    if(act === 'pin') togglePinThought(id);
+    else if(act === 'copy' && th) copyTextToClipboard(th.text);
+    else if(act === 'edit') openThoughtModal(id);
+    else if(act === 'del') deleteThought(id);
+  });
+
   /* ---------- tabs / render ---------- */
   function render(){
-    ['today','stats','backup'].forEach(function(n){
-      $(n+'View').hidden = tab!==n;
-      $('tab-'+n).setAttribute('aria-selected', tab===n ? 'true':'false');
+    ['today','thoughts','stats','backup'].forEach(function(n){
+      var el = $(n+'View');
+      if(el) el.hidden = tab!==n;
+      var tbtn = $('tab-'+n);
+      if(tbtn) tbtn.setAttribute('aria-selected', tab===n ? 'true':'false');
     });
-    if(tab==='today'){ renderHead(); renderList(); }
+    if(tab==='today'){ renderHead(); renderList(); renderTodayThoughtBanner(); }
+    else if(tab==='thoughts') renderThoughts();
     else if(tab==='stats') renderStats();
     renderNote();
   }
@@ -1223,7 +1637,7 @@ fieldset.field{border:0; margin:0; padding:0}
   function setMsg(text,kind){ var m=$('bkMsg'); m.textContent=text; m.className='msg'+(kind?' '+kind:''); }
   function disarm(){ restoreArmed=false; clearTimeout(restoreTimer); $('bkRestore').textContent='استرجاع من النص'; }
   $('bkCopy').addEventListener('click',function(){
-    var out={app:'daily-targets', v:3, exportedAt:new Date().toISOString(), tasks:state.tasks, logs:state.logs, rest:state.rest, badges:state.badges, reminder:state.reminder};
+    var out={app:'daily-targets', v:3, exportedAt:new Date().toISOString(), tasks:state.tasks, logs:state.logs, rest:state.rest, badges:state.badges, reminder:state.reminder, thoughts:state.thoughts, stickyThought:state.stickyThought};
     var text=JSON.stringify(out), ta=$('bkText');
     ta.value=text; ta.focus(); ta.select();
     var fallback=function(){
@@ -1244,17 +1658,17 @@ fieldset.field{border:0; margin:0; padding:0}
     if(!n || !n.tasks.length){ disarm(); setMsg('النص ده مش نسخة احتياطية صحيحة. اتأكد إنك نسخته كامل.','bad'); return; }
     if(!restoreArmed){
       restoreArmed=true; $('bkRestore').textContent='أكيد؟ ده هيستبدل بياناتك الحالية ⚠️';
-      setMsg('النسخة فيها '+n.tasks.length+' مهام. دوس تاني للتأكيد.','');
+      setMsg('النسخة فيها '+n.tasks.length+' مهام و '+(n.thoughts?n.thoughts.length:0)+' خواطر. دوس تاني للتأكيد.','');
       clearTimeout(restoreTimer); restoreTimer=setTimeout(function(){ disarm(); setMsg('',''); },7000);
       return;
     }
-    state=n; disarm(); changed(); setMsg('اتسترجعت بياناتك ✅','good'); render(); initReminder(); syncAllReminders();
+    state=n; disarm(); changed(); setMsg('اتسترجعت بياناتك ✅','good'); render(); initReminder(); syncAllReminders(); updateStickyThoughtNotification();
   });
 
   /* ---------- new day rollover ---------- */
   function checkRollover(){
     var t=todayKey();
-    if(t!==lastToday){ if(view===lastToday) view=t; lastToday=t; celebrated={}; if(!editing) render(); syncAllReminders(); }
+    if(t!==lastToday){ if(view===lastToday) view=t; lastToday=t; celebrated={}; if(!editing) render(); syncAllReminders(); updateStickyThoughtNotification(); }
   }
   setInterval(checkRollover,60000);
   document.addEventListener('visibilitychange',function(){
@@ -1270,6 +1684,7 @@ fieldset.field{border:0; margin:0; padding:0}
   initReminder();
   render();
   syncAllReminders();
+  updateStickyThoughtNotification();
 
   // Register Service Worker for PWA + background notifications
   if('serviceWorker' in navigator){

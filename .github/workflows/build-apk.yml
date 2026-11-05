@@ -77,7 +77,44 @@ jobs:
         run: npx cap add android
       - name: Configure Android permissions
         run: |
-          sed -i 's#<uses-permission android:name="android.permission.INTERNET" />#&\n    <uses-permission android:name="android.permission.VIBRATE" />\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />\n    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />\n    <uses-permission android:name="android.permission.WAKE_LOCK" />\n    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />#' android/app/src/main/AndroidManifest.xml
+          sed -i 's#<uses-permission android:name="android.permission.INTERNET" />#&\n    <uses-permission android:name="android.permission.VIBRATE" />\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />\n    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />\n    <uses-permission android:name="android.permission.WAKE_LOCK" />\n    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />\n    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />#' android/app/src/main/AndroidManifest.xml
+          sed -i 's#android:name=".MainActivity"#& android:supportsPictureInPicture="true"#' android/app/src/main/AndroidManifest.xml
+      - name: Patch MainActivity for Picture in Picture
+        run: |
+          cat << 'EOF' > android/app/src/main/java/com/mohamed/dailytargets/MainActivity.java
+          package com.mohamed.dailytargets;
+
+          import android.app.PictureInPictureParams;
+          import android.os.Build;
+          import android.util.Rational;
+          import android.webkit.JavascriptInterface;
+          import com.getcapacitor.BridgeActivity;
+
+          public class MainActivity extends BridgeActivity {
+              @Override
+              public void onStart() {
+                  super.onStart();
+                  if (this.bridge != null && this.bridge.getWebView() != null) {
+                      this.bridge.getWebView().addJavascriptInterface(new Object() {
+                          @JavascriptInterface
+                          public void enterPip() {
+                              runOnUiThread(() -> {
+                                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                      try {
+                                          PictureInPictureParams.Builder builder = new PictureInPictureParams.Builder();
+                                          builder.setAspectRatio(new Rational(10, 16));
+                                          enterPictureInPictureMode(builder.build());
+                                      } catch (Exception e) {
+                                          enterPictureInPictureMode();
+                                      }
+                                  }
+                              });
+                          }
+                      }, "AndroidPip");
+                  }
+              }
+          }
+          EOF
       - name: Sync web files
         run: npx cap sync android
       - name: Build APK
