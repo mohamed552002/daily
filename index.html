@@ -257,6 +257,47 @@ fieldset.field{border:0; margin:0; padding:0}
 /* Share modal */
 .share-preview-card{background:linear-gradient(145deg, var(--surface), var(--bg)); border:2px solid var(--accent); border-radius:22px; padding:22px; text-align:center; display:flex; flex-direction:column; gap:14px; box-shadow:0 8px 30px rgba(0,0,0,.18)}
 
+/* === GYM TRACKER === */
+.gym-splits-bar{display:flex; gap:8px; overflow-x:auto; padding:4px 0 8px; -webkit-overflow-scrolling:touch; scrollbar-width:none}
+.gym-splits-bar::-webkit-scrollbar{display:none}
+.split-chip{min-height:40px; padding:0 16px; border-radius:20px; border:1px solid var(--line); background:var(--surface); color:var(--muted); font-size:.9rem; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:6px; white-space:nowrap; transition:all .15s}
+.split-chip.active{background:var(--accent); color:var(--accent-ink); border-color:var(--accent); box-shadow:0 2px 8px rgba(15,107,99,.25)}
+.split-chip.add-chip{border-style:dashed; color:var(--ink); background:transparent}
+.split-chip.add-chip:hover{border-color:var(--accent); color:var(--accent)}
+
+.gym-split-header{display:flex; justify-content:space-between; align-items:center; margin:8px 0 6px; gap:8px; flex-wrap:wrap}
+.gym-split-title{margin:0; font-family:var(--display); font-size:1.35rem; font-weight:700; color:var(--ink); display:flex; align-items:center; gap:8px}
+
+.exercise-card{padding:14px; display:flex; flex-direction:column; gap:10px}
+.ex-layout{display:flex; gap:14px; align-items:flex-start}
+.ex-img-box{width:86px; height:86px; border-radius:14px; border:1px solid var(--line); background:var(--bg); overflow:hidden; flex-shrink:0; cursor:pointer; position:relative; display:grid; place-items:center}
+.ex-img{width:100%; height:100%; object-fit:cover; display:block}
+.ex-img-placeholder{font-size:2.2rem; line-height:1; opacity:.7}
+.ex-main{flex:1; min-width:0; display:flex; flex-direction:column; gap:8px}
+.ex-title-row{display:flex; justify-content:space-between; align-items:flex-start; gap:8px}
+.ex-title{margin:0; font-family:var(--display); font-size:1.15rem; font-weight:700; line-height:1.3}
+.ex-muscle-badge{font-size:.78rem; font-weight:600; padding:2px 8px; border-radius:10px; background:var(--track); color:var(--accent); white-space:nowrap; flex-shrink:0}
+.ex-stats{display:flex; align-items:center; gap:10px; flex-wrap:wrap; font-size:.85rem; color:var(--muted)}
+.ex-stat-item b{color:var(--ink); font-size:.95rem}
+.ex-weight-control{display:inline-flex; align-items:center; gap:5px; background:var(--bg); padding:2px 6px; border-radius:10px; border:1px solid var(--line)}
+.ex-weight-val b{font-size:.95rem; color:var(--accent)}
+.btn-micro{min-height:24px; padding:0 6px; font-size:.75rem; border-radius:6px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font-weight:600; cursor:pointer; transition:transform .1s}
+.btn-micro:active{transform:scale(.92)}
+
+.ex-sets-tracker{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:2px}
+.ex-sets-label{font-size:.8rem; color:var(--muted); font-weight:600}
+.ex-set-chips{display:flex; gap:6px; flex-wrap:wrap}
+.set-check-btn{min-width:34px; height:34px; border-radius:10px; border:1.5px solid var(--line); background:var(--bg); color:var(--muted); font-weight:700; font-size:.85rem; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:3px; transition:all .15s; user-select:none; -webkit-user-select:none}
+.set-check-btn.is-done{background:var(--done); color:var(--done-ink); border-color:var(--done); box-shadow:0 2px 8px rgba(168,105,10,.25)}
+.set-check-btn:active{transform:scale(.92)}
+.btn-rest-timer{min-height:34px; padding:0 10px; border-radius:10px; border:1px solid var(--line); background:var(--surface); color:var(--accent); font-size:.82rem; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:4px; margin-inline-start:auto}
+.btn-rest-timer:active{background:var(--track)}
+.ex-notes{margin:0; font-size:.82rem; color:var(--muted); font-style:italic; background:var(--bg); padding:6px 10px; border-radius:8px; border-inline-start:3px solid var(--accent); line-height:1.4}
+
+/* Rest Timer Floating Bar */
+.rest-floating-bar{position:fixed; bottom:max(16px, env(safe-area-inset-bottom, 0px)); left:50%; transform:translateX(-50%); z-index:85; background:var(--surface); border:2px solid var(--accent); border-radius:24px; padding:10px 18px; display:flex; align-items:center; gap:12px; box-shadow:0 8px 30px rgba(0,0,0,.35); max-width:92vw; animation:slideDown .3s ease}
+.rest-floating-time{font-family:var(--display); font-size:1.6rem; font-weight:700; color:var(--accent); line-height:1}
+
 /* === RESPONSIVE === */
 @media(max-width:420px){
   .panel{grid-template-columns:1fr}
@@ -274,6 +315,7 @@ fieldset.field{border:0; margin:0; padding:0}
 <main lang="ar" dir="rtl">
   <nav class="tabs" role="tablist" aria-label="الأقسام">
     <button role="tab" data-tab="today" id="tab-today">اليوم</button>
+    <button role="tab" data-tab="gym" id="tab-gym">الجيم 🏋️‍♂️</button>
     <button role="tab" data-tab="thoughts" id="tab-thoughts">خواطر 💭</button>
     <button role="tab" data-tab="stats" id="tab-stats">إحصائيات</button>
     <button role="tab" data-tab="backup" id="tab-backup">المزيد</button>
@@ -312,6 +354,29 @@ fieldset.field{border:0; margin:0; padding:0}
 
     <section class="list" id="list" aria-label="مهام اليوم"></section>
     <button class="add" id="add">+ مهمة جديدة</button>
+  </div>
+
+  <div class="view" id="gymView" hidden>
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+      <div><h1 class="vh">الجيم</h1><p class="sub">جدول تمارينك، مجاميعك، أوزانك والصور</p></div>
+      <button class="btn ghost" id="btnGymRestQuick" style="min-height:40px; padding:0 12px; font-size:.85rem; display:inline-flex; align-items:center; gap:6px;">⏱️ راحة 90ث</button>
+    </div>
+
+    <!-- Splits horizontal chips -->
+    <div class="gym-splits-bar" id="gymSplitsBar"></div>
+
+    <!-- Active split header & actions -->
+    <div class="gym-split-header">
+      <h2 class="gym-split-title" id="gymActiveSplitTitle"></h2>
+      <div style="display:flex; gap:6px; align-items:center;">
+        <button class="btn ghost" id="btnResetGymSets" style="min-height:36px; padding:0 10px; font-size:.82rem;" title="تصفير مجاميع اليوم للجدول ده">🔄 تصفير المجاميع</button>
+        <button class="btn ghost" id="btnEditGymSplit" style="min-height:36px; padding:0 10px; font-size:.82rem;" title="تعديل اسم أو أيقونة الجدول">⚙️ تعديل الجدول</button>
+      </div>
+    </div>
+
+    <!-- Exercises list -->
+    <section class="list" id="gymExerciseList" aria-label="تمارين الجدول"></section>
+    <button class="add" id="btnAddGymEx">+ تمرين جديد</button>
   </div>
 
   <div class="view" id="thoughtsView" hidden>
@@ -468,6 +533,122 @@ fieldset.field{border:0; margin:0; padding:0}
   </div>
 </div>
 
+<!-- Modal for adding/editing a gym exercise -->
+<div id="gymExModal" style="position:fixed; inset:0; z-index:95; background:rgba(0,0,0,.6); backdrop-filter:blur(4px); display:grid; place-items:center; padding:16px;" hidden>
+  <div class="card" style="width:100%; max-width:480px; max-height:92vh; overflow-y:auto; border-color:var(--accent);">
+    <div class="head">
+      <h2 id="gymExModalTitle" style="font-size:1.25rem;">🏋️‍♂️ تمرين جديد</h2>
+      <button class="icon-btn" id="btnCloseGymExModal" type="button" style="width:36px; height:36px; font-size:1rem;">✕</button>
+    </div>
+    
+    <div class="field wide">
+      <label for="gymInputExName">اسم التمرين</label>
+      <input type="text" id="gymInputExName" placeholder="مثلًا: بنش برس مستوي بالبار">
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+      <div class="field">
+        <label for="gymInputExMuscle">العضلة المستهدفة</label>
+        <input type="text" id="gymInputExMuscle" placeholder="صدر، ظهر، باي، رجل...">
+      </div>
+      <div class="field">
+        <label for="gymInputExWeight">الوزن الحالي (كجم)</label>
+        <input type="number" id="gymInputExWeight" inputmode="decimal" step="0.5" min="0" placeholder="60">
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+      <div class="field">
+        <label for="gymInputExSets">عدد المجموعات (Sets)</label>
+        <input type="number" id="gymInputExSets" inputmode="numeric" min="1" max="10" value="4">
+      </div>
+      <div class="field">
+        <label for="gymInputExReps">العدات (Reps)</label>
+        <input type="text" id="gymInputExReps" placeholder="مثلًا: 10-12 أو 12">
+      </div>
+    </div>
+
+    <!-- Image upload / preview -->
+    <div class="field wide" style="background:var(--bg); border:1px solid var(--line); border-radius:14px; padding:12px;">
+      <label style="font-size:.85rem; color:var(--muted); margin-bottom:6px; display:block;">صورة التمرين 📷</label>
+      <div style="display:flex; gap:12px; align-items:center;">
+        <div id="gymModalImgPreviewBox" style="width:72px; height:72px; border-radius:12px; border:1px dashed var(--muted); display:grid; place-items:center; overflow:hidden; background:var(--surface); flex-shrink:0;">
+          <span id="gymModalImgPlaceholder" style="font-size:1.8rem; opacity:.5;">🏋️‍♂️</span>
+          <img id="gymModalImgPreview" src="" alt="معاينة" style="width:100%; height:100%; object-fit:cover; display:none;">
+        </div>
+        <div style="display:flex; flex-direction:column; gap:6px; flex:1;">
+          <input type="file" id="gymExFileInput" accept="image/*" style="display:none">
+          <button class="btn ghost" type="button" id="btnPickGymImg" style="min-height:36px; font-size:.82rem;">📁 اختيار صورة أو التقاط بالكاميرا</button>
+          <button class="link" type="button" id="btnRemoveGymImg" style="font-size:.78rem; color:var(--danger); padding:0;" hidden>إزالة الصورة الحالية</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="field wide">
+      <label for="gymInputExNotes">ملاحظات / تكنيك</label>
+      <input type="text" id="gymInputExNotes" placeholder="مثلًا: تركيز على النزول البطيء وضم لوحي الكتف">
+    </div>
+
+    <p class="err" id="gymExErr" hidden></p>
+    <div class="row" style="display:flex; gap:8px; margin-top:8px;">
+      <button class="btn primary" id="btnSaveGymEx" type="button" style="flex:1;">حفظ التمرين</button>
+      <button class="btn ghost" id="btnCancelGymEx" type="button">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal for adding/editing a workout split -->
+<div id="gymSplitModal" style="position:fixed; inset:0; z-index:95; background:rgba(0,0,0,.6); backdrop-filter:blur(4px); display:grid; place-items:center; padding:16px;" hidden>
+  <div class="card" style="width:100%; max-width:440px; border-color:var(--accent);">
+    <div class="head">
+      <h2 id="gymSplitModalTitle" style="font-size:1.25rem;">جدول تمارين جديد</h2>
+      <button class="icon-btn" id="btnCloseGymSplitModal" type="button" style="width:36px; height:36px; font-size:1rem;">✕</button>
+    </div>
+    <div class="field wide">
+      <label for="gymInputSplitName">اسم الجدول أو اليوم</label>
+      <input type="text" id="gymInputSplitName" placeholder="مثلًا: بوش / بنج وتراي وكتف">
+    </div>
+    <fieldset class="field wide"><legend>أيقونة الجدول</legend>
+      <div class="chips" id="gymSplitIconChips">
+        <label class="chip"><input type="radio" name="split-icon" value="🏋️‍♂️" checked><span>🏋️‍♂️</span></label>
+        <label class="chip"><input type="radio" name="split-icon" value="💥"><span>💥</span></label>
+        <label class="chip"><input type="radio" name="split-icon" value="🧗‍♂️"><span>🧗‍♂️</span></label>
+        <label class="chip"><input type="radio" name="split-icon" value="🦵"><span>🦵</span></label>
+        <label class="chip"><input type="radio" name="split-icon" value="🥊"><span>🥊</span></label>
+        <label class="chip"><input type="radio" name="split-icon" value="🏃‍♂️"><span>🏃‍♂️</span></label>
+        <label class="chip"><input type="radio" name="split-icon" value="⚡"><span>⚡</span></label>
+        <label class="chip"><input type="radio" name="split-icon" value="🔥"><span>🔥</span></label>
+      </div>
+    </fieldset>
+    <p class="err" id="gymSplitErr" hidden></p>
+    <div class="row" style="display:flex; gap:8px; margin-top:8px;">
+      <button class="btn primary" id="btnSaveGymSplit" type="button" style="flex:1;">حفظ الجدول</button>
+      <button class="btn danger" id="btnDelGymSplit" type="button" hidden>حذف الجدول</button>
+      <button class="btn ghost" id="btnCancelGymSplit" type="button">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- Image zoom modal -->
+<div id="gymImgZoomModal" style="position:fixed; inset:0; z-index:110; background:rgba(0,0,0,.85); backdrop-filter:blur(6px); display:grid; place-items:center; padding:16px;" hidden>
+  <div style="position:relative; max-width:92vw; max-height:85vh; text-align:center;">
+    <button class="icon-btn" id="btnCloseZoomImg" style="position:absolute; top:-14px; right:-14px; background:var(--surface); z-index:2; width:38px; height:38px;">✕</button>
+    <img id="gymZoomedImg" src="" alt="صورة التمرين" style="max-width:100%; max-height:80vh; border-radius:18px; border:2px solid var(--accent); object-fit:contain; display:block;">
+    <p id="gymZoomedTitle" style="color:#fff; font-weight:600; margin:10px 0 0; font-size:1.05rem;"></p>
+  </div>
+</div>
+
+<!-- Rest Timer Floating Bar -->
+<div id="gymRestBar" class="rest-floating-bar" hidden>
+  <span style="font-size:1.4rem;">⏱️</span>
+  <div style="display:flex; flex-direction:column;">
+    <span style="font-size:.72rem; color:var(--muted);">وقت الراحة</span>
+    <span class="rest-floating-time num" id="gymRestTimeText">01:30</span>
+  </div>
+  <button class="btn-micro" id="btnGymRestAdd30" style="min-height:30px; padding:0 8px;">+30ث</button>
+  <button class="icon-btn" id="btnGymRestClose" style="width:30px; height:30px; font-size:.85rem; border:0; background:var(--bg);" title="إنهاء الراحة">✕</button>
+</div>
+
 <!-- Tasbeeh Fullscreen Modal -->
 <div id="tasbeehModal" class="fullscreen-overlay" hidden>
   <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
@@ -566,13 +747,29 @@ fieldset.field{border:0; margin:0; padding:0}
     {id:'t5', icon:'📋', name:'متعدد المهام', desc:'عندك 5 مهام أو أكتر'}
   ];
   var THOUGHT_CATS = ['💭 فكرة', '✨ تأمل', '📖 اقتباس', '💡 حكمة', '❤️ شخصي', '🌙 دعاء وشكر'];
+  var DEFAULT_GYM_SPLITS = [
+    {id:'gs_push', name:'صدر وتراي وكتف 💥', icon:'🏋️‍♂️'},
+    {id:'gs_pull', name:'ظهر وباي 🧗‍♂️', icon:'🧗‍♂️'},
+    {id:'gs_legs', name:'أرجل وبطن 🦵', icon:'🦵'}
+  ];
+  var DEFAULT_GYM_EXERCISES = [
+    {id:'ge_1', splitId:'gs_push', name:'بنش برس مستوي بالبار', muscle:'صدر', sets:4, reps:'10-12', weight:60, notes:'التركيز على النزول البطيء وضم لوحي الكتف', image:'', doneSets:[false,false,false,false]},
+    {id:'ge_2', splitId:'gs_push', name:'تجميع عالي بالدمبلز (Incline DB Press)', muscle:'صدر علوي', sets:3, reps:'12', weight:22, notes:'زاوية دكة 30 درجة', image:'', doneSets:[false,false,false]},
+    {id:'ge_3', splitId:'gs_push', name:'ترايسبس مسطرة بالكيبل (Cable Pushdown)', muscle:'تراي', sets:3, reps:'15', weight:25, notes:'تثبيت الكوع بجانب الجسم', image:'', doneSets:[false,false,false]},
+    {id:'ge_4', splitId:'gs_pull', name:'سحب ظهر عالي واسع (Lat Pulldown)', muscle:'ظهر', sets:4, reps:'10-12', weight:55, notes:'السحب بالمرفقين للأسفل', image:'', doneSets:[false,false,false,false]},
+    {id:'ge_5', splitId:'gs_pull', name:'سحب أرضي ضيق (Seated Cable Row)', muscle:'ظهر', sets:3, reps:'12', weight:50, notes:'عصر عضلات الظهر للخلف', image:'', doneSets:[false,false,false]},
+    {id:'ge_6', splitId:'gs_pull', name:'بايسبس تبادل بالدمبلز', muscle:'باي', sets:3, reps:'12', weight:14, notes:'بدون مرجحة بالجسم', image:'', doneSets:[false,false,false]},
+    {id:'ge_7', splitId:'gs_legs', name:'سكوات بالبار (Barbell Squat)', muscle:'أرجل', sets:4, reps:'10', weight:70, notes:'نزول موازي للأرض وظهر مستقيم', image:'', doneSets:[false,false,false,false]}
+  ];
   var DEFAULTS = {v:3, tasks:[
     {id:'t1', name:'قراءة', icon:'📖', unit:'صفحة', target:4, step:1, days:ALL.slice(), remTime:''},
     {id:'t2', name:'ذكر الله', icon:'📿', unit:'مرة', target:1000, step:100, days:ALL.slice(), remTime:''}
   ], logs:{}, rest:{}, freezes:{}, badges:{}, reminder:{enabled:false, time:'21:00'}, remindedToday:{},
   thoughts:[
     {id:'th1', text:'لا تحزن على ما فات، فكل أمر المؤمن له خير.', cat:'✨ تأمل', pinned:true, created:new Date().toISOString()}
-  ], stickyThought:true, theme:'auto', soundEnabled:true};
+  ], stickyThought:true, theme:'auto', soundEnabled:true,
+  gymSplits: DEFAULT_GYM_SPLITS.slice(),
+  gymExercises: DEFAULT_GYM_EXERCISES.slice()};
 
   var state = null, view = todayKey(), lastToday = view, tab = 'today';
   var editing = null, confirmDel = null, restoreArmed = false, restoreTimer = null;
@@ -581,6 +778,8 @@ fieldset.field{border:0; margin:0; padding:0}
   var thoughtFilter = 'all', thoughtSearchQuery = '', editingThoughtId = null;
   var audioCtx = null, speechRecognizer = null, isRecognizing = false;
   var activeTasbeehTaskId = null, activePomoTaskId = null, pomoInterval = null, pomoSecsLeft = 25 * 60, pomoRunning = false;
+  var activeGymSplitId = 'gs_push', editingGymExId = null, editingGymSplitId = null;
+  var gymTempImgData = '', gymRestSecsLeft = 90, gymRestInterval = null;
 
   /* ---------- dates ---------- */
   function pad(n){ return String(n).padStart(2,'0'); }
@@ -651,7 +850,34 @@ fieldset.field{border:0; margin:0; padding:0}
     var stickyThought = s.stickyThought !== false;
     var theme = (s.theme === 'light' || s.theme === 'dark' || s.theme === 'oled') ? s.theme : 'auto';
     var soundEnabled = s.soundEnabled !== false;
-    return {v:3, tasks:tasks, logs:logs, rest:rest, freezes:freezes, badges:badges, reminder:reminder, remindedToday:remindedToday, thoughts:thoughts, stickyThought:stickyThought, theme:theme, soundEnabled:soundEnabled};
+
+    var gymSplits = (Array.isArray(s.gymSplits) && s.gymSplits.length) ? s.gymSplits.map(function(sp){
+      return {
+        id: String(sp.id || ('gs_' + Math.random().toString(36).substr(2,6))),
+        name: String(sp.name || 'جدول تمارين'),
+        icon: String(sp.icon || '🏋️‍♂️')
+      };
+    }) : DEFAULT_GYM_SPLITS.slice();
+
+    var gymExercises = Array.isArray(s.gymExercises) ? s.gymExercises.map(function(ex){
+      var sets = Math.max(1, Math.min(10, Math.round(Number(ex.sets)) || 4));
+      var doneSets = Array.isArray(ex.doneSets) ? ex.doneSets.slice(0, sets) : [];
+      while(doneSets.length < sets) doneSets.push(false);
+      return {
+        id: String(ex.id || ('ge_' + Math.random().toString(36).substr(2,6))),
+        splitId: String(ex.splitId || (gymSplits[0] ? gymSplits[0].id : 'gs_push')),
+        name: String(ex.name || '').trim(),
+        muscle: String(ex.muscle || ''),
+        sets: sets,
+        reps: String(ex.reps || '10-12'),
+        weight: Number(ex.weight) || 0,
+        notes: String(ex.notes || ''),
+        image: String(ex.image || ''),
+        doneSets: doneSets
+      };
+    }).filter(function(ex){ return !!ex.name; }) : DEFAULT_GYM_EXERCISES.slice();
+
+    return {v:3, tasks:tasks, logs:logs, rest:rest, freezes:freezes, badges:badges, reminder:reminder, remindedToday:remindedToday, thoughts:thoughts, stickyThought:stickyThought, theme:theme, soundEnabled:soundEnabled, gymSplits:gymSplits, gymExercises:gymExercises};
   }
   function loadLocal(){
     try{ var raw=localStorage.getItem(LS_KEY); if(raw) return normalize(JSON.parse(raw)); }catch(e){}
@@ -1771,15 +1997,481 @@ fieldset.field{border:0; margin:0; padding:0}
     closeShareModal();
   });
 
+  /* ---------- gym tracker engine ---------- */
+  function getActiveGymSplit(){
+    if(!state.gymSplits || !state.gymSplits.length){
+      state.gymSplits = DEFAULT_GYM_SPLITS.slice();
+    }
+    var found = state.gymSplits.find(function(s){ return s.id === activeGymSplitId; });
+    if(!found){
+      activeGymSplitId = state.gymSplits[0].id;
+      found = state.gymSplits[0];
+    }
+    return found;
+  }
+
+  function renderGym(){
+    var split = getActiveGymSplit();
+    
+    // 1. Render splits horizontal bar
+    var splitsBar = $('gymSplitsBar');
+    if(splitsBar){
+      var chipsHtml = state.gymSplits.map(function(s){
+        var isActive = (s.id === split.id);
+        return '<button class="split-chip'+(isActive?' active':'')+'" data-split-select-id="'+esc(s.id)+'">'+
+          '<span>'+(s.icon||'🏋️‍♂️')+'</span><span>'+esc(s.name)+'</span>'+
+        '</button>';
+      }).join('');
+      chipsHtml += '<button class="split-chip add-chip" id="btnAddGymSplitChip">+ جدول جديد</button>';
+      splitsBar.innerHTML = chipsHtml;
+    }
+
+    // 2. Render active split title
+    if($('gymActiveSplitTitle')){
+      $('gymActiveSplitTitle').innerHTML = (split.icon ? '<span>'+split.icon+'</span> ' : '') + esc(split.name);
+    }
+
+    // 3. Render exercises in active split
+    var exList = $('gymExerciseList');
+    if(exList){
+      var exercises = (state.gymExercises || []).filter(function(ex){
+        return ex.splitId === split.id;
+      });
+
+      if(!exercises.length){
+        exList.innerHTML = '<div class="card" style="text-align:center; padding:32px 16px; color:var(--muted);">' +
+          '<div style="font-size:3rem; margin-bottom:8px;">🏋️‍♂️</div>' +
+          '<p style="font-size:1.1rem; margin:0; font-weight:600; color:var(--ink);">مفيش تمارين في الجدول ده لسه</p>' +
+          '<p style="font-size:.9rem; margin:6px 0 14px;">اضغط "+ تمرين جديد" تحت وابدأ ضيف تمارينك ومجموعاتك وأوزانك!</p>' +
+        '</div>';
+      } else {
+        exList.innerHTML = exercises.map(function(ex){
+          var imgHtml = ex.image 
+            ? '<img src="'+esc(ex.image)+'" class="ex-img" alt="'+esc(ex.name)+'">'
+            : '<span class="ex-img-placeholder">🏋️‍♂️</span>';
+
+          var setsChipsHtml = '';
+          for(var i=0; i<ex.sets; i++){
+            var isSetDone = !!(ex.doneSets && ex.doneSets[i]);
+            setsChipsHtml += '<button class="set-check-btn'+(isSetDone?' is-done':'')+'" data-ex-set-idx="'+i+'" data-ex-id="'+ex.id+'" title="المجموعة '+(i+1)+'">'+
+              '<span class="set-num">'+(i+1)+'</span>'+
+              (isSetDone ? '<span class="set-check">✓</span>' : '')+
+            '</button>';
+          }
+
+          var notesHtml = ex.notes ? '<p class="ex-notes">💡 '+esc(ex.notes)+'</p>' : '';
+          var muscleBadge = ex.muscle ? '<span class="ex-muscle-badge">'+esc(ex.muscle)+'</span>' : '';
+
+          return '<article class="card exercise-card" data-gym-ex-id="'+ex.id+'">'+
+            '<div class="ex-layout">'+
+              '<div class="ex-img-box" data-act="view-img" title="اضغط لتكبير الصورة">'+
+                imgHtml+
+              '</div>'+
+              '<div class="ex-main">'+
+                '<div class="ex-title-row">'+
+                  '<h3 class="ex-title">'+esc(ex.name)+'</h3>'+
+                  muscleBadge+
+                '</div>'+
+                '<div class="ex-stats">'+
+                  '<span class="ex-stat-item"><b>'+ex.sets+'</b> مجموعات</span>'+
+                  '<span class="ex-stat-item"><b>'+esc(ex.reps)+'</b> عدة</span>'+
+                  '<div class="ex-weight-control">'+
+                    '<button class="btn-micro" data-act="w-dec" title="تقليل الوزن 2.5 كجم">−</button>'+
+                    '<span class="ex-weight-val"><b>'+fmt(ex.weight)+'</b> كجم</span>'+
+                    '<button class="btn-micro" data-act="w-inc" title="زيادة الوزن 2.5 كجم">+</button>'+
+                  '</div>'+
+                '</div>'+
+                '<div class="ex-sets-tracker">'+
+                  '<span class="ex-sets-label">المجاميع:</span>'+
+                  '<div class="ex-set-chips">'+setsChipsHtml+'</div>'+
+                  '<button class="btn-rest-timer" data-act="start-rest" title="بدء مؤقت راحة">⏱️ راحة</button>'+
+                '</div>'+
+                notesHtml+
+              '</div>'+
+            '</div>'+
+            '<div class="actions2" style="border-top:1px dashed var(--line); padding-top:8px;">'+
+              '<button class="btn ghost" data-act="edit-ex">✏️ تعديل</button>'+
+              '<button class="btn ghost" data-act="del-ex" style="color:var(--danger)">🗑️ حذف</button>'+
+            '</div>'+
+          '</article>';
+        }).join('');
+      }
+    }
+  }
+
+  // Split management
+  function openGymSplitModal(splitId){
+    editingGymSplitId = splitId || null;
+    var isEdit = !!splitId;
+    var split = isEdit ? state.gymSplits.find(function(s){ return s.id === splitId; }) : null;
+
+    $('gymSplitModalTitle').textContent = isEdit ? '⚙️ تعديل جدول التمارين' : '🏋️‍♂️ جدول تمارين جديد';
+    $('gymInputSplitName').value = split ? split.name : '';
+    $('gymSplitErr').hidden = true;
+    $('btnDelGymSplit').hidden = !isEdit || (state.gymSplits.length <= 1);
+
+    var curIcon = split ? split.icon : '🏋️‍♂️';
+    var iconRadios = document.querySelectorAll('input[name="split-icon"]');
+    iconRadios.forEach(function(r){
+      r.checked = (r.value === curIcon);
+    });
+
+    $('gymSplitModal').hidden = false;
+    setTimeout(function(){ $('gymInputSplitName').focus(); }, 100);
+  }
+
+  function closeGymSplitModal(){
+    $('gymSplitModal').hidden = true;
+    editingGymSplitId = null;
+  }
+
+  function saveGymSplit(){
+    var name = ($('gymInputSplitName').value || '').trim();
+    if(!name){
+      $('gymSplitErr').textContent = 'اكتب اسم الجدول.';
+      $('gymSplitErr').hidden = false;
+      return;
+    }
+    var selIcon = document.querySelector('input[name="split-icon"]:checked');
+    var icon = selIcon ? selIcon.value : '🏋️‍♂️';
+
+    if(editingGymSplitId){
+      var sp = state.gymSplits.find(function(s){ return s.id === editingGymSplitId; });
+      if(sp){
+        sp.name = name;
+        sp.icon = icon;
+      }
+    } else {
+      var newId = 'gs_' + Date.now().toString(36);
+      state.gymSplits.push({ id: newId, name: name, icon: icon });
+      activeGymSplitId = newId;
+    }
+
+    closeGymSplitModal();
+    changed();
+    renderGym();
+    showToast('🏋️‍♂️', 'تم الحفظ', 'تم حفظ الجدول بنجاح');
+  }
+
+  function deleteGymSplit(splitId){
+    if(state.gymSplits.length <= 1){
+      showToast('⚠️', 'لا يمكن الحذف', 'لازم يفضل جدول واحد على الأقل');
+      return;
+    }
+    state.gymSplits = state.gymSplits.filter(function(s){ return s.id !== splitId; });
+    state.gymExercises = state.gymExercises.filter(function(ex){ return ex.splitId !== splitId; });
+    activeGymSplitId = state.gymSplits[0].id;
+
+    closeGymSplitModal();
+    changed();
+    renderGym();
+    showToast('🗑️', 'تم الحذف', 'تم حذف الجدول وتمارينه');
+  }
+
+  function resetGymSetsForActiveSplit(){
+    var exercises = (state.gymExercises || []).filter(function(ex){ return ex.splitId === activeGymSplitId; });
+    exercises.forEach(function(ex){
+      ex.doneSets = (ex.doneSets || []).map(function(){ return false; });
+    });
+    changed();
+    renderGym();
+    playSound('tap');
+    showToast('🔄', 'تصفير المجاميع', 'تم تصفير علامات مجموعات اليوم لهذا الجدول');
+  }
+
+  // Exercise modal & image management
+  function openGymExModal(exId){
+    editingGymExId = exId || null;
+    var isEdit = !!exId;
+    var ex = isEdit ? state.gymExercises.find(function(e){ return e.id === exId; }) : null;
+
+    $('gymExModalTitle').textContent = isEdit ? '✏️ تعديل التمرين' : '🏋️‍♂️ تمرين جديد';
+    $('gymInputExName').value = ex ? ex.name : '';
+    $('gymInputExMuscle').value = ex ? ex.muscle : '';
+    $('gymInputExWeight').value = (ex && ex.weight) ? ex.weight : '';
+    $('gymInputExSets').value = ex ? ex.sets : 4;
+    $('gymInputExReps').value = ex ? ex.reps : '10-12';
+    $('gymInputExNotes').value = ex ? ex.notes : '';
+    $('gymExErr').hidden = true;
+
+    gymTempImgData = ex ? (ex.image || '') : '';
+    updateModalImgPreview();
+
+    $('gymExModal').hidden = false;
+    setTimeout(function(){ $('gymInputExName').focus(); }, 100);
+  }
+
+  function closeGymExModal(){
+    $('gymExModal').hidden = true;
+    editingGymExId = null;
+    gymTempImgData = '';
+  }
+
+  function updateModalImgPreview(){
+    var imgEl = $('gymModalImgPreview');
+    var placeEl = $('gymModalImgPlaceholder');
+    var btnRemove = $('btnRemoveGymImg');
+    if(gymTempImgData){
+      imgEl.src = gymTempImgData;
+      imgEl.style.display = 'block';
+      placeEl.style.display = 'none';
+      btnRemove.hidden = false;
+    } else {
+      imgEl.src = '';
+      imgEl.style.display = 'none';
+      placeEl.style.display = 'block';
+      btnRemove.hidden = true;
+    }
+  }
+
+  function compressImageFile(file, callback){
+    if(!file) return;
+    var reader = new FileReader();
+    reader.onload = function(e){
+      var img = new Image();
+      img.onload = function(){
+        var maxDim = 480;
+        var w = img.width, h = img.height;
+        if(w > maxDim || h > maxDim){
+          if(w > h){ h = Math.round((h * maxDim) / w); w = maxDim; }
+          else { w = Math.round((w * maxDim) / h); h = maxDim; }
+        }
+        var canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        var compressed = canvas.toDataURL('image/jpeg', 0.75);
+        callback(compressed);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function saveGymEx(){
+    var name = ($('gymInputExName').value || '').trim();
+    if(!name){
+      $('gymExErr').textContent = 'اكتب اسم التمرين.';
+      $('gymExErr').hidden = false;
+      return;
+    }
+    var muscle = ($('gymInputExMuscle').value || '').trim();
+    var weight = parseFloat($('gymInputExWeight').value) || 0;
+    var sets = Math.max(1, Math.min(10, parseInt($('gymInputExSets').value, 10) || 4));
+    var reps = ($('gymInputExReps').value || '10-12').trim();
+    var notes = ($('gymInputExNotes').value || '').trim();
+
+    if(editingGymExId){
+      var ex = state.gymExercises.find(function(e){ return e.id === editingGymExId; });
+      if(ex){
+        ex.name = name;
+        ex.muscle = muscle;
+        ex.weight = weight;
+        ex.sets = sets;
+        ex.reps = reps;
+        ex.notes = notes;
+        ex.image = gymTempImgData;
+        var doneSets = Array.isArray(ex.doneSets) ? ex.doneSets.slice(0, sets) : [];
+        while(doneSets.length < sets) doneSets.push(false);
+        ex.doneSets = doneSets;
+      }
+    } else {
+      var newDoneSets = [];
+      for(var i=0; i<sets; i++) newDoneSets.push(false);
+      state.gymExercises.push({
+        id: 'ge_' + Date.now().toString(36),
+        splitId: activeGymSplitId,
+        name: name,
+        muscle: muscle,
+        sets: sets,
+        reps: reps,
+        weight: weight,
+        notes: notes,
+        image: gymTempImgData,
+        doneSets: newDoneSets
+      });
+    }
+
+    closeGymExModal();
+    changed();
+    renderGym();
+    showToast('🏋️‍♂️', 'تم الحفظ', 'تم حفظ التمرين بنجاح');
+  }
+
+  function deleteGymEx(exId){
+    state.gymExercises = state.gymExercises.filter(function(e){ return e.id !== exId; });
+    changed();
+    renderGym();
+    showToast('🗑️', 'تم الحذف', 'تم حذف التمرين');
+  }
+
+  // Rest Timer Controller
+  function startGymRest(secs){
+    if(gymRestInterval) clearInterval(gymRestInterval);
+    gymRestSecsLeft = secs || 90;
+    updateGymRestUI();
+    $('gymRestBar').hidden = false;
+    playSound('tap');
+
+    gymRestInterval = setInterval(function(){
+      if(gymRestSecsLeft > 0){
+        gymRestSecsLeft--;
+        updateGymRestUI();
+      } else {
+        clearInterval(gymRestInterval);
+        gymRestInterval = null;
+        $('gymRestBar').hidden = true;
+        playSound('complete');
+        try { if(navigator.vibrate) navigator.vibrate([150, 100, 150]); } catch(e){}
+        showToast('🔔', 'انتهت الراحة!', 'حان وقت المجموعة التالية 💪');
+      }
+    }, 1000);
+  }
+
+  function updateGymRestUI(){
+    var m = Math.floor(gymRestSecsLeft / 60);
+    var s = gymRestSecsLeft % 60;
+    $('gymRestTimeText').textContent = pad(m) + ':' + pad(s);
+  }
+
+  function closeGymRest(){
+    if(gymRestInterval) clearInterval(gymRestInterval);
+    gymRestInterval = null;
+    $('gymRestBar').hidden = true;
+  }
+
+  // Gym event bindings
+  $('gymSplitsBar') && $('gymSplitsBar').addEventListener('click', function(e){
+    var chip = e.target.closest('[data-split-select-id]');
+    if(chip){
+      activeGymSplitId = chip.getAttribute('data-split-select-id');
+      renderGym();
+      return;
+    }
+    if(e.target.closest('#btnAddGymSplitChip')){
+      openGymSplitModal();
+    }
+  });
+
+  $('btnEditGymSplit') && $('btnEditGymSplit').addEventListener('click', function(){
+    openGymSplitModal(activeGymSplitId);
+  });
+  $('btnResetGymSets') && $('btnResetGymSets').addEventListener('click', resetGymSetsForActiveSplit);
+  $('btnAddGymEx') && $('btnAddGymEx').addEventListener('click', function(){ openGymExModal(); });
+  $('btnGymRestQuick') && $('btnGymRestQuick').addEventListener('click', function(){ startGymRest(90); });
+  $('btnGymRestAdd30') && $('btnGymRestAdd30').addEventListener('click', function(){
+    gymRestSecsLeft += 30;
+    updateGymRestUI();
+  });
+  $('btnGymRestClose') && $('btnGymRestClose').addEventListener('click', closeGymRest);
+
+  $('btnCloseGymExModal') && $('btnCloseGymExModal').addEventListener('click', closeGymExModal);
+  $('btnCancelGymEx') && $('btnCancelGymEx').addEventListener('click', closeGymExModal);
+  $('btnSaveGymEx') && $('btnSaveGymEx').addEventListener('click', saveGymEx);
+
+  $('btnPickGymImg') && $('btnPickGymImg').addEventListener('click', function(){
+    $('gymExFileInput').click();
+  });
+  $('gymExFileInput') && $('gymExFileInput').addEventListener('change', function(e){
+    if(e.target.files && e.target.files[0]){
+      compressImageFile(e.target.files[0], function(base64Data){
+        gymTempImgData = base64Data;
+        updateModalImgPreview();
+      });
+    }
+  });
+  $('btnRemoveGymImg') && $('btnRemoveGymImg').addEventListener('click', function(){
+    gymTempImgData = '';
+    $('gymExFileInput').value = '';
+    updateModalImgPreview();
+  });
+
+  $('btnCloseGymSplitModal') && $('btnCloseGymSplitModal').addEventListener('click', closeGymSplitModal);
+  $('btnCancelGymSplit') && $('btnCancelGymSplit').addEventListener('click', closeGymSplitModal);
+  $('btnSaveGymSplit') && $('btnSaveGymSplit').addEventListener('click', saveGymSplit);
+  $('btnDelGymSplit') && $('btnDelGymSplit').addEventListener('click', function(){
+    if(confirm('هل أنت متأكد من حذف هذا الجدول وجميع التمارين بداخله؟')){
+      deleteGymSplit(editingGymSplitId);
+    }
+  });
+
+  $('btnCloseZoomImg') && $('btnCloseZoomImg').addEventListener('click', function(){
+    $('gymImgZoomModal').hidden = true;
+  });
+  $('gymImgZoomModal') && $('gymImgZoomModal').addEventListener('click', function(e){
+    if(e.target === this || e.target.id === 'btnCloseZoomImg'){
+      this.hidden = true;
+    }
+  });
+
+  $('gymExerciseList') && $('gymExerciseList').addEventListener('click', function(e){
+    var card = e.target.closest('[data-gym-ex-id]');
+    if(!card) return;
+    var exId = card.getAttribute('data-gym-ex-id');
+    var ex = (state.gymExercises || []).find(function(x){ return x.id === exId; });
+    if(!ex) return;
+
+    // Toggle set done
+    var setBtn = e.target.closest('[data-ex-set-idx]');
+    if(setBtn){
+      var idx = parseInt(setBtn.getAttribute('data-ex-set-idx'), 10);
+      if(!Array.isArray(ex.doneSets)) ex.doneSets = [];
+      ex.doneSets[idx] = !ex.doneSets[idx];
+      changed();
+      renderGym();
+      if(ex.doneSets[idx]){
+        playSound('complete');
+        // Auto-start rest timer
+        startGymRest(90);
+      } else {
+        playSound('tap');
+      }
+      return;
+    }
+
+    var actBtn = e.target.closest('[data-act]');
+    if(!actBtn) return;
+    var act = actBtn.getAttribute('data-act');
+
+    if(act === 'w-inc'){
+      ex.weight = Math.round((ex.weight + 2.5) * 10) / 10;
+      changed();
+      renderGym();
+      playSound('tap');
+    } else if(act === 'w-dec'){
+      ex.weight = Math.max(0, Math.round((ex.weight - 2.5) * 10) / 10);
+      changed();
+      renderGym();
+      playSound('tap');
+    } else if(act === 'start-rest'){
+      startGymRest(90);
+    } else if(act === 'edit-ex'){
+      openGymExModal(ex.id);
+    } else if(act === 'del-ex'){
+      if(confirm('هل تريد حذف تمرين "' + ex.name + '"؟')){
+        deleteGymEx(ex.id);
+      }
+    } else if(act === 'view-img'){
+      if(ex.image){
+        $('gymZoomedImg').src = ex.image;
+        $('gymZoomedTitle').textContent = ex.name + (ex.muscle ? ' (' + ex.muscle + ')' : '');
+        $('gymImgZoomModal').hidden = false;
+      } else {
+        openGymExModal(ex.id);
+      }
+    }
+  });
+
   /* ---------- tabs / render ---------- */
   function render(){
-    ['today','thoughts','stats','backup'].forEach(function(n){
+    ['today','gym','thoughts','stats','backup'].forEach(function(n){
       var el = $(n+'View');
       if(el) el.hidden = tab!==n;
       var tbtn = $('tab-'+n);
       if(tbtn) tbtn.setAttribute('aria-selected', tab===n ? 'true':'false');
     });
     if(tab==='today'){ renderHead(); renderList(); renderTodayThoughtBanner(); }
+    else if(tab==='gym') renderGym();
     else if(tab==='thoughts') renderThoughts();
     else if(tab==='stats') renderStats();
     renderNote();
@@ -2277,7 +2969,7 @@ fieldset.field{border:0; margin:0; padding:0}
   function setMsg(text,kind){ var m=$('bkMsg'); m.textContent=text; m.className='msg'+(kind?' '+kind:''); }
   function disarm(){ restoreArmed=false; clearTimeout(restoreTimer); $('bkRestore').textContent='استرجاع من النص'; }
   $('bkCopy').addEventListener('click',function(){
-    var out={app:'daily-targets', v:3, exportedAt:new Date().toISOString(), tasks:state.tasks, logs:state.logs, rest:state.rest, freezes:state.freezes, badges:state.badges, reminder:state.reminder, thoughts:state.thoughts, stickyThought:state.stickyThought, theme:state.theme, soundEnabled:state.soundEnabled};
+    var out={app:'daily-targets', v:3, exportedAt:new Date().toISOString(), tasks:state.tasks, logs:state.logs, rest:state.rest, freezes:state.freezes, badges:state.badges, reminder:state.reminder, thoughts:state.thoughts, stickyThought:state.stickyThought, theme:state.theme, soundEnabled:state.soundEnabled, gymSplits:state.gymSplits, gymExercises:state.gymExercises};
     var text=JSON.stringify(out), ta=$('bkText');
     ta.value=text; ta.focus(); ta.select();
     var fallback=function(){
@@ -2298,7 +2990,7 @@ fieldset.field{border:0; margin:0; padding:0}
     if(!n || !n.tasks.length){ disarm(); setMsg('النص ده مش نسخة احتياطية صحيحة. اتأكد إنك نسخته كامل.','bad'); return; }
     if(!restoreArmed){
       restoreArmed=true; $('bkRestore').textContent='أكيد؟ ده هيستبدل بياناتك الحالية ⚠️';
-      setMsg('النسخة فيها '+n.tasks.length+' مهام و '+(n.thoughts?n.thoughts.length:0)+' خواطر. دوس تاني للتأكيد.','');
+      setMsg('النسخة فيها '+n.tasks.length+' مهام و '+(n.thoughts?n.thoughts.length:0)+' خواطر و '+(n.gymExercises?n.gymExercises.length:0)+' تمارين جيم. دوس تاني للتأكيد.','');
       clearTimeout(restoreTimer); restoreTimer=setTimeout(function(){ disarm(); setMsg('',''); },7000);
       return;
     }
