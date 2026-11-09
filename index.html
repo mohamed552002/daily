@@ -1682,7 +1682,15 @@ fieldset.field{border:0; margin:0; padding:0}
     fetch('https://api.github.com/repos/' + GITHUB_REPO + '/releases', {
       headers: { 'Accept': 'application/vnd.github.v3+json' }
     })
-    .then(function(res){ return res.json(); })
+    .then(function(res){
+      if(res.status === 404){
+        throw new Error('NOT_FOUND_PRIVATE');
+      }
+      if(!res.ok){
+        throw new Error('HTTP_' + res.status);
+      }
+      return res.json();
+    })
     .then(function(releases){
       if(!Array.isArray(releases) || releases.length === 0){
         if(!silent) statusEl.innerHTML = '<p style="color:var(--muted); font-size:.9rem;">✅ لا توجد تحديثات متاحة حالياً.</p>';
@@ -1738,7 +1746,7 @@ fieldset.field{border:0; margin:0; padding:0}
           '<p style="font-size:.88rem; color:var(--ink); margin:0 0 4px;">إصدارك الحالي: <span class="num">' + esc(APP_VERSION) + '</span></p>' +
           '<p style="font-size:.82rem; color:var(--muted); margin:0 0 10px;">التحديث فوق النسخة القديمة — بياناتك ومهامك وخواطرك محفوظة ومش هتتمسح 🔒</p>';
         if(apkUrl){
-          html += '<a href="' + esc(apkUrl) + '" style="display:inline-block; background:var(--accent); color:var(--accent-ink); padding:10px 20px; border-radius:12px; text-decoration:none; font-weight:600; font-size:.95rem;">📥 تحميل التحديث</a>';
+          html += '<a href="' + esc(apkUrl) + '" style="display:inline-block; background:var(--accent); color:var(--accent-ink); padding:10px 20px; border-radius:12px; text-decoration:none; font-weight:600; font-size:.95rem;">📥 تحميل التحديث المباشر</a>';
         } else {
           html += '<a href="' + esc(latest.html_url) + '" target="_blank" style="display:inline-block; background:var(--accent); color:var(--accent-ink); padding:10px 20px; border-radius:12px; text-decoration:none; font-weight:600; font-size:.95rem;">📥 فتح صفحة التحميل</a>';
         }
@@ -1747,7 +1755,7 @@ fieldset.field{border:0; margin:0; padding:0}
         if(!silent) showToast('🎉', 'تحديث جديد!', 'إصدار ' + remoteVersion + ' متاح للتحميل');
       } else {
         if(!silent){
-          statusEl.innerHTML = '<p style="color:var(--done); font-size:.9rem;">✅ أنت على آخر إصدار (' + esc(APP_VERSION) + '). لا تحديثات جديدة.</p>';
+          statusEl.innerHTML = '<p style="color:var(--done); font-size:.9rem;">✅ أنت على آخر إصدار (' + esc(APP_VERSION) + '). لا توجد تحديثات جديدة.</p>';
           showToast('✅', 'آخر إصدار', 'أنت تستخدم أحدث نسخة من تارجت اليوم');
         }
       }
@@ -1755,7 +1763,15 @@ fieldset.field{border:0; margin:0; padding:0}
     .catch(function(err){
       console.log('Update check error:', err);
       if(!silent){
-        statusEl.innerHTML = '<p style="color:var(--danger); font-size:.9rem;">⚠️ تعذر الاتصال بخادم التحديثات. تأكد من اتصالك بالإنترنت.</p>';
+        if(err && err.message === 'NOT_FOUND_PRIVATE'){
+          statusEl.innerHTML = '<div style="background:var(--surface); border:1.5px dashed var(--danger); border-radius:14px; padding:12px; margin:6px 0;">' +
+            '<p style="color:var(--danger); font-size:.95rem; font-weight:600; margin:0 0 6px;">🔒 مستودع GitHub مضبوط كـ Private</p>' +
+            '<p style="color:var(--muted); font-size:.82rem; margin:0 0 8px; line-height:1.4;">GitHub لا يسمح للتطبيق بفحص التحديثات أو تنزيل الـ APK بدون تسجيل دخول طالما المستودع خاص. لجعل التحديث يعمل تلقائياً، قم بتغيير المستودع إلى <b>Public (عام)</b> من إعدادات GitHub Settings.</p>' +
+            '<a href="https://github.com/' + GITHUB_REPO + '/releases" target="_blank" style="display:inline-block; font-size:.85rem; color:var(--accent); font-weight:600; text-decoration:underline;">فتح صفحة الإصدارات في المتصفح ↗</a>' +
+          '</div>';
+        } else {
+          statusEl.innerHTML = '<p style="color:var(--danger); font-size:.9rem;">⚠️ تعذر الاتصال بخادم التحديثات (' + (err ? err.message : '') + '). تأكد من اتصالك بالإنترنت.</p>';
+        }
       }
     });
   }
